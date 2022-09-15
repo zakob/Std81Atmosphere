@@ -1,0 +1,64 @@
+#:kivy 2.1.0
+#:import Clipboard kivy.core.clipboard.Clipboard
+
+<About>
+    id: about
+    title: 'About'
+    title_size: '20sp'
+    size_hint: 0.9, 0.5
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 9
+        Label:
+            text: 'GOST 4401-81\nAtmosphere Standard\nparameters'
+            font_size: '29sp'
+            halign: 'center'
+        Label:
+            size_hint: 1, 0.1
+            markup: True
+            text: 'Contact: [u][ref=mailto:bad_zako@hotmail.com]bad_zako@hotmail.com[/ref][/u]'
+            font_size: '20sp'
+            on_ref_press:
+                import webbrowser
+                webbrowser.open(args[1])
+        Button:
+            size_hint: 0.5, 0.14
+            pos_hint: {'center_x': 0.5}
+            text: 'Close'
+            on_press: about.dismiss()
+
+<atmoCalc>:
+    h_input: h_input
+    res_output: res_output
+    orientation: 'vertical'
+    padding: 11, 11
+    spacing: 25
+    TextInput:
+        id: h_input
+        multiline: False
+        text: ''
+        input_filter: 'float'
+        input_type: 'number'
+        size_hint: 1, None
+        height: self.minimum_height
+        font_size: '45sp'
+        on_text: root.calc()
+    ScrollView:
+        Label:
+            id: res_output
+            size_hint: 1, 0.9
+            markup: True
+            text: 'Please, enter height in meters.'
+            text_size: self.size
+            font_size: '29sp'
+            halign: 'center'
+            valign: 'top'
+            padding_x: 21
+            on_ref_press:
+                root.change_color(args[1])
+                Clipboard.copy(args[1].split()[1])
+    Button:
+        text: 'About'
+        size_hint: 0.5, 0.07
+        pos_hint: {'center_x': 0.5}
+        on_release: root.get_about()
