@@ -4,7 +4,7 @@
 title = Std81Atmosphere
 
 # (str) Package name
-package.name = Std81Atmoshere
+package.name = Std81Atmosphere
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.std81atmosphere
@@ -99,11 +99,11 @@ fullscreen = 0
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-android.api = 33
+android.api = 35
 #android.api = 27
 
 # (int) Minimum API your APK / AAB will support.
-android.minapi = 27
+android.minapi = 28
 
 # (int) Android SDK version to use
 #android.sdk = 20
