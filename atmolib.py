@@ -1,6 +1,7 @@
 from math import exp, log, sqrt, pow
 from typing import Union
 
+
 def pressure(h: float) -> float:
     """Return pressure [Pa]."""
     Mc = 0.02896442 # molar weight of air at sea level
@@ -37,6 +38,7 @@ def pressure(h: float) -> float:
     
     return 0
 
+
 def temperature(h: float) -> float:
     """Return temperature [K]."""
     Mc = 0.02896442 # molar weight of air at sea level
@@ -46,7 +48,6 @@ def temperature(h: float) -> float:
     # b - molar or thermodynamic temperature gradient
     # H1 - geopotential height of current layer
     # h1 - geometric height of current layer
-    
 
     if h <= 120000: 
         H = geopotential_height(h)
@@ -65,7 +66,7 @@ def temperature(h: float) -> float:
         if H > 102450 and h <= 120000: H1, T1m, b = 102450, 212.00, 0.0110
         Tm = T1m + b * (H - H1) 
         return Tm * M / Mc
-    
+
     if h > 120000 and h <= 1200000:
         if h > 120000 and h <= 140000:  h1, T1, b = 120000, 334.42, 0.011259
         if h > 140000 and h <= 160000:  h1, T1, b = 140000, 559.60, 0.006800
@@ -80,6 +81,7 @@ def temperature(h: float) -> float:
     
     return 1000
 
+
 def density(h: float) -> float:
     """Return density [kg/m^3]."""
     R = 8.314 # universal gas constant
@@ -87,6 +89,7 @@ def density(h: float) -> float:
     M = molar_weight(h)
     T = temperature(h)
     return P * M / R / T
+
 
 def molar_weight(h: float) -> float:
     """Return molar mass [kg/mole]."""
@@ -117,13 +120,14 @@ def molar_weight(h: float) -> float:
         M = B0 + (B1 * h) + (B2 * pow(h, 2)) + (B3 * pow(h, 3))
     return M * 0.001
 
+
 def concentration(h: float) -> float:
     """Return concentration [m^-3]."""
     if h <= 120000:
         P = pressure(h)
         T = temperature(h)
         return 7.243611e+22 * P / T
-    
+
     if h > 120000 and h <= 1200000:
         if h > 120000 and h <= 150000:
             A0, A1, A2, A3, A4, m = \
@@ -154,8 +158,9 @@ def concentration(h: float) -> float:
             0.383220e+02, -0.50980e-04, 0.181e-10, 0, 0, 11
 
         return (A0 + A1 * h + A2 * pow(h, 2) + A3 * pow(h, 3) + A4 * pow(h, 4)) * pow(10, m)
-    
+
     return concentration(1200000)
+
 
 def sound_speed(h: float) -> float:
     """Return sound of speed [m/s]."""
@@ -164,12 +169,14 @@ def sound_speed(h: float) -> float:
     T = temperature(h)
     return sqrt(1.4 * R * T / M)
 
+
 def free_path(h: float) -> Union[float, None]:
     """Return mean free path [m]."""
     P = pressure(h)
     T = temperature(h)
     if P > 0: return 2.332376e-05 * T / P
     return None
+
 
 def dynamic_viscosity(h: float) -> Union[float, None]:
     """Return dynamic viscosity [Pa*s]."""
@@ -179,11 +186,13 @@ def dynamic_viscosity(h: float) -> Union[float, None]:
     if h > 90000: return None
     return b * pow(T, 1.5) / (T + S)
 
+
 def kinematic_viscosity(h: float) -> Union[float, None]:
-    """Return kinematic viscosity [m^2*s]."""
+    """Return kinematic viscosity [m^2/s]."""
     mu = dynamic_viscosity(h)
     if mu: return mu / density(h)
     return None
+
 
 def thermal_conductivity(h: float) -> Union[float, None]:
     """Return thermal conductivity [W/(m*K)]."""
@@ -192,16 +201,19 @@ def thermal_conductivity(h: float) -> Union[float, None]:
     p = 12 / T
     return 2.648151e-03 * pow(T, 1.5) / (T + 245.4 * pow(10, -p))
 
+
 def geopotential_height(h: float) -> float:
     """Return geopotential height [m]."""
-    Rz = 6356767.0 # conventional radius of the Earth in meters
+    Rz = 6356767.0  # conventional radius of the Earth in meters
     if h == -Rz: return -Rz
     return Rz * h / (Rz + h)
+
 
 def to_print(result: Union[float, None]) -> str:
     """Prepares the result for print."""
     if not result: return 'None'
     return f'{result:.3e}' if abs(result) < 1e-3 or abs(result) > 1e6 else f'{result:.3f}' 
+
 
 def allcalc(h: str) -> Union[str, tuple]:
     try:
@@ -212,14 +224,15 @@ def allcalc(h: str) -> Union[str, tuple]:
         return 'Valid height range is\n[-2000; 1200000]\nin meter.'
     return (('P', to_print(pressure(h)), 'Pa'), ('T', to_print(temperature(h)), 'K'), ('rho', to_print(density(h)), 'kg/m^3'),
             ('M', to_print(molar_weight(h)), 'kg/mole'), ('n', to_print(concentration(h)), 'm^-3'), ('a', to_print(sound_speed(h)), 'm/s'),
-            ('l', to_print(free_path(h)), 'm'), ('mu', to_print(dynamic_viscosity(h)), 'Pa*s'), ('nu', to_print(kinematic_viscosity(h)), 'm^2*s'),
+            ('l', to_print(free_path(h)), 'm'), ('mu', to_print(dynamic_viscosity(h)), 'Pa*s'), ('nu', to_print(kinematic_viscosity(h)), 'm^2/s'),
             ('W', to_print(thermal_conductivity(h)), 'W/(m*K)'), ('H', to_print(geopotential_height(h)), 'm'))
+
 
 if __name__ == '__main__':
     import sys
-    
+
     if len(sys.argv) != 2:
         print('You must specify height in meter.')
         sys.exit(1)
-    
+
     print(allcalc(sys.argv[1]))
