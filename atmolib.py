@@ -15,27 +15,40 @@ def pressure(h: float) -> float:
     H = geopotential_height(h)
 
     if h <= 120000: 
-        if h <= -1999: return 127783
-        if h > -1999 and h <= 0:       H1, P1, T1m, b = -2000, 127774, 301.15, -0.0065
-        if h > 0 and h <= 11019:       H1, P1, T1m, b = 0, 101325, 288.15, -0.0065
-        if h > 11019 and h <= 20063:   H1, P1, T1m, b = 11000, 22632.0, 216.65, 0
-        if h > 20063 and h <= 32162:   H1, P1, T1m, b = 20000, 5474.87, 216.65, 0.0010
-        if h > 32162 and h <= 47350:   H1, P1, T1m, b = 32000, 868.014, 228.65, 0.0028
-        if h > 47350 and h <= 51412:   H1, P1, T1m, b = 47000, 110.906, 270.65,0
-        if h > 51412 and h <= 71802:   H1, P1, T1m, b = 51000, 66.9384, 270.65, -0.0028
-        if h > 71802 and h <= 86152:   H1, P1, T1m, b = 71000, 3.95639, 214.65, -0.0020
-        if h > 86152 and h <= 95411:   H1, P1, T1m, b = 85000, pressure(86152), 186.65, 0
-        if h > 95411 and h <= 104128:  H1, P1, T1m, b = 94000, pressure(95411), 186.65, 0.0030
-        if h > 104128 and h <= 120000: H1, P1, T1m, b =102450, pressure(104128), 212.00, 0.0110
+        if h <= -1999:
+            return 127783
+        if h > -1999 and h <= 0:
+            H1, P1, T1m, b = -2000, 127774, 301.15, -0.0065
+        if h > 0 and h <= 11019:
+            H1, P1, T1m, b = 0, 101325, 288.15, -0.0065
+        if h > 11019 and h <= 20063:
+            H1, P1, T1m, b = 11000, 22632.0, 216.65, 0
+        if h > 20063 and h <= 32162:
+            H1, P1, T1m, b = 20000, 5474.87, 216.65, 0.0010
+        if h > 32162 and h <= 47350:
+            H1, P1, T1m, b = 32000, 868.014, 228.65, 0.0028
+        if h > 47350 and h <= 51412:
+            H1, P1, T1m, b = 47000, 110.906, 270.65,0
+        if h > 51412 and h <= 71802:
+            H1, P1, T1m, b = 51000, 66.9384, 270.65, -0.0028
+        if h > 71802 and h <= 86152:
+            H1, P1, T1m, b = 71000, 3.95639, 214.65, -0.0020
+        if h > 86152 and h <= 95411:
+            H1, P1, T1m, b = 85000, pressure(86152), 186.65, 0
+        if h > 95411 and h <= 104128:
+            H1, P1, T1m, b = 94000, pressure(95411), 186.65, 0.0030
+        if h > 104128 and h <= 120000:
+            H1, P1, T1m, b =102450, pressure(104128), 212.00, 0.0110
 
-        if b != 0: return exp(log(P1) - gc *Mc * log( (T1m + b * (H - H1))/T1m ) / R /b)
+        if b != 0:
+            return exp(log(P1) - gc *Mc * log( (T1m + b * (H - H1))/T1m ) / R /b)
         return exp(log(P1) - gc * Mc * (H - H1) / R / T1m)
 
     if h > 120000 and h <= 1200000:
         n = concentration(h)
         T = temperature(h)
         return 1 / 7.243611 * 1e-22 * n * T 
-    
+
     return 0
 
 
@@ -52,33 +65,54 @@ def temperature(h: float) -> float:
     if h <= 120000: 
         H = geopotential_height(h)
         M = molar_weight(h)
-        if H <= -2000: return 301.15
-        if H > -2000 and H <= 0:       H1, T1m, b = -2000, 301.15, -0.0065
-        if H > 0 and H <= 11000:       H1, T1m, b = 0, 288.15, -0.0065
-        if H > 11000 and H <= 20000:   H1, T1m, b = 11000, 216.65, 0
-        if H > 20000 and H <= 32000:   H1, T1m, b = 20000, 216.65, 0.0010
-        if H > 32000 and H <= 47000:   H1, T1m, b = 32000, 228.65, 0.0028
-        if H > 47000 and H <= 51000:   H1, T1m, b = 47000, 270.65, 0
-        if H > 51000 and H <= 71000:   H1, T1m, b = 51000, 270.65, -0.0028
-        if H > 71000 and H <= 85000:   H1, T1m, b = 71000, 214.65, -0.0020
-        if H > 85000 and H <= 94000:   H1, T1m, b = 85000, 186.65, 0
-        if H > 94000 and H <= 102450:  H1, T1m, b = 94000, 186.65, 0.0030
-        if H > 102450 and h <= 120000: H1, T1m, b = 102450, 212.00, 0.0110
+        if H <= -2000:
+            return 301.15
+        if H > -2000 and H <= 0:
+            H1, T1m, b = -2000, 301.15, -0.0065
+        if H > 0 and H <= 11000:
+            H1, T1m, b = 0, 288.15, -0.0065
+        if H > 11000 and H <= 20000:
+            H1, T1m, b = 11000, 216.65, 0
+        if H > 20000 and H <= 32000:
+            H1, T1m, b = 20000, 216.65, 0.0010
+        if H > 32000 and H <= 47000:
+            H1, T1m, b = 32000, 228.65, 0.0028
+        if H > 47000 and H <= 51000:
+            H1, T1m, b = 47000, 270.65, 0
+        if H > 51000 and H <= 71000:
+            H1, T1m, b = 51000, 270.65, -0.0028
+        if H > 71000 and H <= 85000:
+            H1, T1m, b = 71000, 214.65, -0.0020
+        if H > 85000 and H <= 94000:
+            H1, T1m, b = 85000, 186.65, 0
+        if H > 94000 and H <= 102450:
+            H1, T1m, b = 94000, 186.65, 0.0030
+        if H > 102450 and h <= 120000:
+            H1, T1m, b = 102450, 212.00, 0.0110
         Tm = T1m + b * (H - H1) 
         return Tm * M / Mc
 
     if h > 120000 and h <= 1200000:
-        if h > 120000 and h <= 140000:  h1, T1, b = 120000, 334.42, 0.011259
-        if h > 140000 and h <= 160000:  h1, T1, b = 140000, 559.60, 0.006800
-        if h > 160000 and h <= 200000:  h1, T1, b = 160000, 695.60, 0.003970
-        if h > 200000 and h <= 250000:  h1, T1, b = 200000, 854.40, 0.001750
-        if h > 250000 and h <= 325000:  h1, T1, b = 250000, 941.90, 0.000570
-        if h > 325000 and h <= 400000:  h1, T1, b = 325000, 984.65, 0.000150
-        if h > 400000 and h <= 600000:  h1, T1, b = 400000, 995.90, 0.000020
-        if h > 600000 and h <= 800000:  h1, T1, b = 600000, 999.90, 0.0000005
-        if h > 800000 and h <= 1200000: h1, T1, b = 800000, 1000.00, 0
+        if h > 120000 and h <= 140000:
+            h1, T1, b = 120000, 334.42, 0.011259
+        if h > 140000 and h <= 160000:
+            h1, T1, b = 140000, 559.60, 0.006800
+        if h > 160000 and h <= 200000:
+            h1, T1, b = 160000, 695.60, 0.003970
+        if h > 200000 and h <= 250000:
+            h1, T1, b = 200000, 854.40, 0.001750
+        if h > 250000 and h <= 325000:
+            h1, T1, b = 250000, 941.90, 0.000570
+        if h > 325000 and h <= 400000:
+            h1, T1, b = 325000, 984.65, 0.000150
+        if h > 400000 and h <= 600000:
+            h1, T1, b = 400000, 995.90, 0.000020
+        if h > 600000 and h <= 800000:
+            h1, T1, b = 600000, 999.90, 0.0000005
+        if h > 800000 and h <= 1200000:
+            h1, T1, b = 800000, 1000.00, 0
         return T1 + b * (h - h1)
-    
+
     return 1000
 
 
@@ -174,7 +208,8 @@ def free_path(h: float) -> Union[float, None]:
     """Return mean free path [m]."""
     P = pressure(h)
     T = temperature(h)
-    if P > 0: return 2.332376e-05 * T / P
+    if P > 0:
+        return 2.332376e-05 * T / P
     return None
 
 
@@ -183,20 +218,23 @@ def dynamic_viscosity(h: float) -> Union[float, None]:
     S = 110.4    # Sutherland coefficient for calculating dynamic viscosity
     b = 1.458e-6 # another Sutherland coefficient for calculating dynamic viscosity
     T = temperature(h)
-    if h > 90000: return None
+    if h > 90000:
+        return None
     return b * pow(T, 1.5) / (T + S)
 
 
 def kinematic_viscosity(h: float) -> Union[float, None]:
     """Return kinematic viscosity [m^2/s]."""
     mu = dynamic_viscosity(h)
-    if mu: return mu / density(h)
+    if mu:
+        return mu / density(h)
     return None
 
 
 def thermal_conductivity(h: float) -> Union[float, None]:
     """Return thermal conductivity [W/(m*K)]."""
-    if h > 90000: return None
+    if h > 90000:
+        return None
     T = temperature(h)
     p = 12 / T
     return 2.648151e-03 * pow(T, 1.5) / (T + 245.4 * pow(10, -p))
@@ -205,13 +243,15 @@ def thermal_conductivity(h: float) -> Union[float, None]:
 def geopotential_height(h: float) -> float:
     """Return geopotential height [m]."""
     Rz = 6356767.0  # conventional radius of the Earth in meters
-    if h == -Rz: return -Rz
+    if h == -Rz:
+        return -Rz
     return Rz * h / (Rz + h)
 
 
 def to_print(result: Union[float, None]) -> str:
     """Prepares the result for print."""
-    if not result: return 'None'
+    if not result:
+        return 'None'
     return f'{result:.3e}' if abs(result) < 1e-3 or abs(result) > 1e6 else f'{result:.3f}' 
 
 
@@ -222,10 +262,19 @@ def allcalc(h: str) -> Union[str, tuple]:
         return 'Please, enter height in meters.'
     if h < -2000 or h > 1200000:
         return 'Valid height range is\n[-2000; 1200000]\nin meter.'
-    return (('P', to_print(pressure(h)), 'Pa'), ('T', to_print(temperature(h)), 'K'), ('rho', to_print(density(h)), 'kg/m^3'),
-            ('M', to_print(molar_weight(h)), 'kg/mole'), ('n', to_print(concentration(h)), 'm^-3'), ('a', to_print(sound_speed(h)), 'm/s'),
-            ('l', to_print(free_path(h)), 'm'), ('mu', to_print(dynamic_viscosity(h)), 'Pa*s'), ('nu', to_print(kinematic_viscosity(h)), 'm^2/s'),
-            ('W', to_print(thermal_conductivity(h)), 'W/(m*K)'), ('H', to_print(geopotential_height(h)), 'm'))
+    return (
+        ('P', to_print(pressure(h)), 'Pa'),
+        ('T', to_print(temperature(h)), 'K'),
+        ('rho', to_print(density(h)), 'kg/m^3'),
+        ('M', to_print(molar_weight(h)), 'kg/mole'),
+        ('n', to_print(concentration(h)), 'm^-3'),
+        ('a', to_print(sound_speed(h)), 'm/s'),
+        ('l', to_print(free_path(h)), 'm'),
+        ('mu', to_print(dynamic_viscosity(h)), 'Pa*s'),
+        ('nu', to_print(kinematic_viscosity(h)), 'm^2/s'),
+        ('W', to_print(thermal_conductivity(h)), 'W/(m*K)'),
+        ('H', to_print(geopotential_height(h)), 'm')
+    )
 
 
 if __name__ == '__main__':
