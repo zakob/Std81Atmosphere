@@ -265,14 +265,14 @@ def allcalc(h: str) -> Union[str, tuple]:
     return (
         ('P', to_print(pressure(h)), 'Pa'),
         ('T', to_print(temperature(h)), 'K'),
-        ('rho', to_print(density(h)), 'kg/m^3'),
+        ('rho', to_print(density(h)), 'kg/m[sup]3[/sup]'),
         ('M', to_print(molar_weight(h)), 'kg/mole'),
-        ('n', to_print(concentration(h)), 'm^-3'),
+        ('n', to_print(concentration(h)), 'm[sup]-3[/sup]'),
         ('a', to_print(sound_speed(h)), 'm/s'),
         ('l', to_print(free_path(h)), 'm'),
-        ('mu', to_print(dynamic_viscosity(h)), 'Pa*s'),
-        ('nu', to_print(kinematic_viscosity(h)), 'm^2/s'),
-        ('W', to_print(thermal_conductivity(h)), 'W/(m*K)'),
+        ('mu', to_print(dynamic_viscosity(h)), 'Pa·s'),
+        ('nu', to_print(kinematic_viscosity(h)), 'm[sup]2[/sup]/s'),
+        ('W', to_print(thermal_conductivity(h)), 'W/(m·K)'),
         ('H', to_print(geopotential_height(h)), 'm')
     )
 
