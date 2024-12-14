@@ -4,9 +4,9 @@ from typing import Union
 
 def pressure(h: float) -> float:
     """Return pressure [Pa]."""
-    Mc = 0.02896442 # molar weight of air at sea level
-    gc = 9.80665    # acceleration of gravity
-    R = 8.314       # universal gas constant
+    Mc = 0.02896442  # molar weight of air at sea level
+    gc = 9.80665     # acceleration of gravity
+    R = 8.314        # universal gas constant
     # H1 - geopotential height of current layer
     # P1 - lower pressure of layer
     # T1m - lower molar temperature of layer
@@ -54,7 +54,7 @@ def pressure(h: float) -> float:
 
 def temperature(h: float) -> float:
     """Return temperature [K]."""
-    Mc = 0.02896442 # molar weight of air at sea level
+    Mc = 0.02896442  # molar weight of air at sea level
     # Tm - molar temperature
     # T1m - lower molar temperature of layer
     # T1 - lower thermodynamic temperature of layer
@@ -118,7 +118,7 @@ def temperature(h: float) -> float:
 
 def density(h: float) -> float:
     """Return density [kg/m^3]."""
-    R = 8.314 # universal gas constant
+    R = 8.314  # universal gas constant
     P = pressure(h)
     M = molar_weight(h)
     T = temperature(h)
@@ -127,7 +127,7 @@ def density(h: float) -> float:
 
 def molar_weight(h: float) -> float:
     """Return molar mass [kg/mole]."""
-    Mc = 0.02896442 # molar weight of air at sea level
+    Mc = 0.02896442  # molar weight of air at sea level
     if h <= 94000:
         return Mc
     if h > 1200000:
@@ -198,7 +198,7 @@ def concentration(h: float) -> float:
 
 def sound_speed(h: float) -> float:
     """Return sound of speed [m/s]."""
-    R = 8.314 # universal gas constant
+    R = 8.314  # universal gas constant
     M = molar_weight(h)
     T = temperature(h)
     return sqrt(1.4 * R * T / M)
@@ -215,8 +215,8 @@ def free_path(h: float) -> Union[float, None]:
 
 def dynamic_viscosity(h: float) -> Union[float, None]:
     """Return dynamic viscosity [Pa*s]."""
-    S = 110.4    # Sutherland coefficient for calculating dynamic viscosity
-    b = 1.458e-6 # another Sutherland coefficient for calculating dynamic viscosity
+    S = 110.4     # Sutherland coefficient for calculating dynamic viscosity
+    b = 1.458e-6  # another Sutherland coefficient for calculating dynamic viscosity
     T = temperature(h)
     if h > 90000:
         return None
