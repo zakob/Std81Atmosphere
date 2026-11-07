@@ -7,7 +7,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from std81 import i18n  # noqa: E402
+from std81 import PARAMETERS, compute, format_state, i18n  # noqa: E402
 
 
 class TranslationTest(unittest.TestCase):
@@ -51,6 +51,23 @@ class TranslationTest(unittest.TestCase):
         codes = [code for code, _ in i18n.available_languages()]
         self.assertIn('ru', codes)
         self.assertIn('en', codes)
+
+    def test_unit_keys_exist_in_every_language(self):
+        for parameter in PARAMETERS:
+            for code, strings in i18n.TRANSLATIONS.items():
+                with self.subTest(language=code, key=parameter.unit_key):
+                    self.assertIn(parameter.unit_key, strings)
+
+    def test_units_follow_language(self):
+        state = compute(0)
+        i18n.set_language('ru')
+        russian = [row[2] for row in format_state(state)]
+        self.assertEqual(russian[0], 'Па')
+        self.assertIn('кг/м^3', russian)
+        i18n.set_language('en')
+        english = [row[2] for row in format_state(state)]
+        self.assertEqual(english[0], 'Pa')
+        self.assertIn('kg/m^3', english)
 
 
 if __name__ == '__main__':
