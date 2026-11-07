@@ -2,14 +2,26 @@
 
 App for calculating atmosphere parameters on height according **GOST 4401-81**.
 
+## Features
+
+* single-height calculation of all standard parameters with tap-to-copy;
+* table of parameters over a height range, exported to the clipboard as CSV;
+* plots of pressure, temperature, density and speed of sound;
+* Russian and English interface, the choice is remembered between runs;
+* no network access and no permissions.
+
+| Calculation | Table | Plot |
+|---|---|---|
+| ![Calculation](docs/calc.png) | ![Table](docs/table.png) | ![Plot](docs/plot.png) |
+
 ---
 
 ## Project layout
 
 | Path | Purpose |
 |---|---|
-| `main.py`, `atmo.kv` | Kivy application (single screen) |
-| `std81/` | calculation core: constants, layer table, atmosphere model, formatting |
+| `main.py`, `atmo.kv` | Kivy application (calculation, table and plot screens) |
+| `std81/` | calculation core, layer table, formatting, translations, range tables |
 | `tests/` | golden tests against the GOST tables and physical invariants |
 | `buildozer.spec` | Android build configuration |
 

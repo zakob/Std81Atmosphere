@@ -27,8 +27,24 @@ from .constants import (
 )
 from .layers import layer_at, pressure_at, temperature_at
 
-INVALID_NUMBER_MESSAGE = 'Please, enter height in meters.'
-OUT_OF_RANGE_MESSAGE = 'Valid height range is\n[-2000; 1200000]\nin meter.'
+MESSAGES = {
+    'invalid_number': 'Please, enter height in meters.',
+    'out_of_range': 'Valid height range is\n[-2000; 1200000]\nin meter.',
+}
+INVALID_NUMBER_MESSAGE = MESSAGES['invalid_number']
+OUT_OF_RANGE_MESSAGE = MESSAGES['out_of_range']
+
+
+class HeightError(ValueError):
+    """Invalid height input.
+
+    ``code`` is a stable identifier ("invalid_number" or "out_of_range") that
+    the UI can translate.
+    """
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(MESSAGES[code])
 
 # Upper atmosphere: (lower boundary, upper boundary, temperature, gradient).
 _UPPER_TEMPERATURE: Tuple[Tuple[float, float, float, float], ...] = (
@@ -85,11 +101,11 @@ def validate_height(height: float) -> float:
     try:
         value = float(height)
     except (TypeError, ValueError):
-        raise ValueError(INVALID_NUMBER_MESSAGE) from None
+        raise HeightError('invalid_number') from None
     if not isfinite(value):
-        raise ValueError(INVALID_NUMBER_MESSAGE)
+        raise HeightError('invalid_number')
     if not MIN_HEIGHT <= value <= MAX_HEIGHT:
-        raise ValueError(OUT_OF_RANGE_MESSAGE)
+        raise HeightError('out_of_range')
     return value
 
 

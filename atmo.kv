@@ -1,63 +1,172 @@
 #:kivy 2.3.0
-#:import Clipboard kivy.core.clipboard.Clipboard
 
-<About>
-    id: about
-    title: 'About'
-    title_size: '20sp'
-    size_hint: 0.9, 0.5
-    BoxLayout:
-        orientation: 'vertical'
-        spacing: 9
-        Label:
-            text: 'GOST 4401-81\nAtmosphere Standard\nparameters'
-            font_size: '29sp'
-            halign: 'center'
-        Label:
-            size_hint: 1, 0.1
-            markup: True
-            text: 'Contact: [u][ref=mailto:bad_zako@hotmail.com]bad_zako@hotmail.com[/ref][/u]'
-            font_size: '20sp'
-            on_ref_press:
-                import webbrowser
-                webbrowser.open(args[1])
-        Button:
-            size_hint: 0.5, 0.14
-            pos_hint: {'center_x': 0.5}
-            text: 'Close'
-            on_press: about.dismiss()
+<FieldInput@TextInput>:
+    background_color: 0.16, 0.17, 0.20, 1
+    foreground_color: 0.95, 0.95, 0.95, 1
+    cursor_color: 1, 0.72, 0.25, 1
+    hint_text_color: 0.55, 0.58, 0.62, 1
+    padding: dp(10), dp(8)
 
-<AtmoCalc>:
-    h_input: h_input
-    res_output: res_output
+<CalcScreen>:
     orientation: 'vertical'
-    padding: 23, 110, 23, 101
-    spacing: 25
-    TextInput:
-        id: h_input
-        multiline: False
-        text: ''
-        input_filter: 'float'
-        input_type: 'number'
-        size_hint: 1, None
-        height: self.minimum_height
-        font_size: '45sp'
-        on_text: root.calc()
+    padding: dp(12), dp(12), dp(12), dp(4)
+    spacing: dp(8)
+    BoxLayout:
+        size_hint_y: None
+        height: dp(56)
+        spacing: dp(6)
+        FieldInput:
+            id: h_input
+            multiline: False
+            input_filter: 'float'
+            input_type: 'number'
+            font_size: sp(26)
+            on_text: root.schedule_calc()
+        Button:
+            id: sign_button
+            text: '±'
+            size_hint_x: None
+            width: dp(52)
+            font_size: sp(20)
+            on_release: root.toggle_sign()
     ScrollView:
+        id: scroll
+        do_scroll_x: False
+        bar_width: dp(4)
         Label:
             id: res_output
-            size_hint: 1, 0.9
+            size_hint_y: None
+            height: self.texture_size[1]
+            text_size: self.width, None
             markup: True
-            text: 'Please, enter height in meters.'
-            text_size: self.size
-            font_size: '29sp'
             halign: 'center'
             valign: 'top'
-            on_ref_press:
-                root.change_color(args[1])
-                Clipboard.copy(args[1].split()[1])
-    Button:
-        text: 'About'
-        size_hint: 0.5, 0.07
-        pos_hint: {'center_x': 0.5}
-        on_release: root.get_about()
+            font_size: sp(19)
+            on_ref_press: root.copy_value(args[1])
+
+<TableScreen>:
+    orientation: 'vertical'
+    padding: dp(10), dp(10), dp(10), dp(4)
+    spacing: dp(6)
+    GridLayout:
+        cols: 2
+        rows: 3
+        size_hint_y: None
+        height: dp(114)
+        spacing: dp(4)
+        Label:
+            id: from_label
+            font_size: sp(14)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+        FieldInput:
+            id: from_input
+            multiline: False
+            input_filter: 'float'
+            input_type: 'number'
+            font_size: sp(16)
+        Label:
+            id: to_label
+            font_size: sp(14)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+        FieldInput:
+            id: to_input
+            multiline: False
+            input_filter: 'float'
+            input_type: 'number'
+            font_size: sp(16)
+        Label:
+            id: step_label
+            font_size: sp(14)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+        FieldInput:
+            id: step_input
+            multiline: False
+            input_filter: 'float'
+            input_type: 'number'
+            font_size: sp(16)
+    BoxLayout:
+        size_hint_y: None
+        height: dp(44)
+        spacing: dp(6)
+        Button:
+            id: build_button
+            font_size: sp(14)
+            on_release: root.build_table()
+        Button:
+            id: export_button
+            font_size: sp(14)
+            on_release: root.export_csv()
+    ScrollView:
+        do_scroll_x: True
+        do_scroll_y: True
+        bar_width: dp(4)
+        GridLayout:
+            id: grid
+            cols: 4
+            size_hint: None, None
+            width: self.minimum_width
+            height: self.minimum_height
+            spacing: dp(2), dp(2)
+
+<PlotScreen>:
+    orientation: 'vertical'
+    padding: dp(10), dp(10), dp(10), dp(4)
+    spacing: dp(6)
+    BoxLayout:
+        size_hint_y: None
+        height: dp(40)
+        spacing: dp(6)
+        Spinner:
+            id: parameter_spinner
+            font_size: sp(14)
+            on_text: root.refresh()
+        Spinner:
+            id: span_spinner
+            font_size: sp(14)
+            on_text: root.refresh()
+    PlotWidget:
+        id: plot
+
+<Root>:
+    orientation: 'vertical'
+    ScreenManager:
+        id: manager
+        Screen:
+            name: 'calc'
+            CalcScreen:
+                id: calc_screen
+        Screen:
+            name: 'table'
+            TableScreen:
+                id: table_screen
+        Screen:
+            name: 'plot'
+            PlotScreen:
+                id: plot_screen
+    BoxLayout:
+        size_hint_y: None
+        height: dp(50)
+        spacing: dp(2)
+        padding: dp(4), dp(2)
+        Button:
+            id: nav_calc
+            font_size: sp(13)
+            on_release: app.show_screen('calc')
+        Button:
+            id: nav_table
+            font_size: sp(13)
+            on_release: app.show_screen('table')
+        Button:
+            id: nav_plot
+            font_size: sp(13)
+            on_release: app.show_screen('plot')
+        Button:
+            id: nav_settings
+            font_size: sp(13)
+            on_release: app.open_settings()

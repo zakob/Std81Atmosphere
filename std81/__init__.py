@@ -12,9 +12,11 @@ Use :func:`compute` to get every parameter in one call and
 :func:`std81.formatting.format_state` to present them.
 """
 
+from . import i18n
 from .api import CalcResult, allcalc
 from .atmosphere import (
     AtmosphereState,
+    HeightError,
     concentration,
     compute,
     density,
@@ -30,15 +32,30 @@ from .atmosphere import (
     validate_height,
 )
 from .formatting import PARAMETERS, Parameter, format_number, format_state
+from .table import (
+    CSV_COLUMNS,
+    MAX_ROWS,
+    TableError,
+    TableRequest,
+    build_rows,
+    parse_request,
+    rows_to_csv,
+)
 
 __version__ = '0.9'
 
 __all__ = [
+    'CSV_COLUMNS',
+    'MAX_ROWS',
     'PARAMETERS',
     'AtmosphereState',
     'CalcResult',
+    'HeightError',
     'Parameter',
+    'TableError',
+    'TableRequest',
     'allcalc',
+    'build_rows',
     'compute',
     'concentration',
     'density',
@@ -47,9 +64,12 @@ __all__ = [
     'format_state',
     'free_path',
     'geopotential_height',
+    'i18n',
     'kinematic_viscosity',
     'molar_weight',
+    'parse_request',
     'pressure',
+    'rows_to_csv',
     'sound_speed',
     'temperature',
     'thermal_conductivity',
