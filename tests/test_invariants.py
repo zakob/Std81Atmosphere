@@ -142,7 +142,7 @@ class AllCalcTest(unittest.TestCase):
         self.assertIsInstance(result, tuple)
         self.assertEqual(len(result), 11)
         self.assertEqual([row[0] for row in result],
-                         ['P', 'T', 'rho', 'M', 'n', 'a', 'l', 'mu', 'nu', 'W', 'H'])
+                         ['P', 'T', 'ρ', 'M', 'n', 'a', 'l', 'μ', 'ν', 'W', 'H'])
 
     def test_invalid_text(self):
         self.assertIn('height', A.allcalc('abc'))

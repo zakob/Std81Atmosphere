@@ -27,13 +27,13 @@ class Parameter:
 PARAMETERS: Tuple[Parameter, ...] = (
     Parameter('P', 'pressure', 'unit_pa', 6),
     Parameter('T', 'temperature', 'unit_k'),
-    Parameter('rho', 'density', 'unit_kg_m3'),
+    Parameter('ρ', 'density', 'unit_kg_m3'),
     Parameter('M', 'molar_mass', 'unit_kg_mol'),
     Parameter('n', 'concentration', 'unit_m3'),
     Parameter('a', 'sound_speed', 'unit_m_s'),
     Parameter('l', 'mean_free_path', 'unit_m'),
-    Parameter('mu', 'dynamic_viscosity', 'unit_pa_s'),
-    Parameter('nu', 'kinematic_viscosity', 'unit_m2_s'),
+    Parameter('μ', 'dynamic_viscosity', 'unit_pa_s'),
+    Parameter('ν', 'kinematic_viscosity', 'unit_m2_s'),
     Parameter('W', 'thermal_conductivity', 'unit_w_mk'),
     Parameter('H', 'geopotential_height', 'unit_m'),
 )
