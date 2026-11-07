@@ -4,6 +4,20 @@ App for calculating atmosphere parameters on height accoding **GOST 4401-81**.
 
 ---
 
+## Tests
+
+Golden tests compare the calculations with the tables of GOST 4401-81
+(1410 reference rows). No third-party packages are required:
+
+```
+python -m unittest discover -s tests -v
+```
+
+See [tests/README.md](tests/README.md) for the provenance of the reference data
+and the known deviations of the 120-150 km layer.
+
+---
+
 ## Build for Android
 
 1. Create image with **buildozer** according to https://github.com/kivy/buildozer?tab=readme-ov-file#buildozer-docker-image
