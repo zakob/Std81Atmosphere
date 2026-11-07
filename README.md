@@ -1,6 +1,29 @@
 # Std81Atmosphere
 
-App for calculating atmosphere parameters on height accoding **GOST 4401-81**.
+App for calculating atmosphere parameters on height according **GOST 4401-81**.
+
+---
+
+## Project layout
+
+| Path | Purpose |
+|---|---|
+| `main.py`, `atmo.kv` | Kivy application (single screen) |
+| `std81/` | calculation core: constants, layer table, atmosphere model, formatting |
+| `tests/` | golden tests against the GOST tables and physical invariants |
+| `buildozer.spec` | Android build configuration |
+
+The core has no Kivy dependency, so it can be used from scripts:
+
+```sh
+python -m std81 1000
+```
+
+```python
+from std81 import compute
+state = compute(1000)
+print(state.pressure, state.temperature)
+```
 
 ---
 
@@ -13,8 +36,22 @@ Golden tests compare the calculations with the tables of GOST 4401-81
 python -m unittest discover -s tests -v
 ```
 
+or, if you prefer pytest:
+
+```
+python -m pip install -r requirements-dev.txt
+pytest -q
+```
+
 See [tests/README.md](tests/README.md) for the provenance of the reference data
 and the known deviations of the 120-150 km layer.
+
+---
+
+## Continuous integration
+
+GitHub Actions run lint and tests on every push, build a debug APK on demand and
+publish a signed APK for every `v*` tag. See [docs/ci.md](docs/ci.md).
 
 ---
 
