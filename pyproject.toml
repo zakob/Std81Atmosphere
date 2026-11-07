@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+exclude = [".buildozer", "bin", "keystores"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["std81"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
