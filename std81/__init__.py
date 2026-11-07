@@ -17,8 +17,8 @@ from .api import CalcResult, allcalc
 from .atmosphere import (
     AtmosphereState,
     HeightError,
-    concentration,
     compute,
+    concentration,
     density,
     dynamic_viscosity,
     free_path,

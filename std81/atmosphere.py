@@ -19,11 +19,11 @@ from .constants import (
     M0,
     MAX_HEIGHT,
     MIN_HEIGHT,
-    R,
     TRANSPORT_MAX_HEIGHT,
     UPPER_ATMOSPHERE_START,
     VISCOSITY_B,
     VISCOSITY_S,
+    R,
 )
 from .layers import layer_at, pressure_at, temperature_at
 
