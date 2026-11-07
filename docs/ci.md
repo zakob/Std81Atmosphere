@@ -161,6 +161,7 @@ base64 -w0 keystores/std81atmosphere.keystore
 | `docker: Error response ... pull access denied` | образ `ghcr.io/kivy/buildozer:latest` недоступен; перезапустите job или проверьте доступ к ghcr.io |
 | Ошибка подписи | секреты `KEYSTORE_*`; в контейнере keystore должен быть по пути `/home/user/hostcwd/keystores/release.keystore` |
 | `No space left on device` | шаг **Free disk space** освобождает ~11 ГБ; при повторе можно удалить ещё `/opt/hostedtoolcache` |
+| Ошибки компиляции Kivy (`_PyInterpreterState_GetConfig`, `Py_UNICODE`) | p4a собрал слишком новый Python; в `buildozer.spec` зафиксирован `python3==3.12.8` — не убирайте пин |
 | Сборка долго висит | первый запуск качает SDK/NDK; последующие должны идти быстрее |
 
 Логи всегда доступны на странице запуска: **Actions → запуск → job → шаг**.

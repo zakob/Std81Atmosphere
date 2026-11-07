@@ -37,7 +37,9 @@ version = 1.0.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.3.0,sdl2
+# python3 is pinned: p4a master builds Python 3.14 by default and Kivy 2.3.0
+# does not compile against it (uses CPython internals removed in 3.14).
+requirements = python3==3.12.8,kivy==2.3.0,sdl2
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
