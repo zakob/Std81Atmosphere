@@ -38,6 +38,7 @@ from std81 import (
     parse_request,
     rows_to_csv,
 )
+from std81.plotting import scale_ticks
 
 _SUPERSCRIPT = re.compile(r'\^(-?\d+)')
 
@@ -225,12 +226,12 @@ class TableScreen(BoxLayout):
         _toast(i18n.tr('table_copied', count=len(self.rows)))
 
 
-# (symbol, attribute, logarithmic)
+# (symbol, attribute, logarithmic, axis label key)
 PLOT_PARAMETERS = (
-    ('P', 'pressure', True),
-    ('T', 'temperature', False),
-    ('rho', 'density', True),
-    ('a', 'sound_speed', False),
+    ('P', 'pressure', True, 'plot_axis_p'),
+    ('T', 'temperature', False, 'plot_axis_t'),
+    ('ρ', 'density', True, 'plot_axis_rho'),
+    ('a', 'sound_speed', False, 'plot_axis_a'),
 )
 PLOT_SPANS = (20_000, 50_000, 100_000, 1_200_000)
 PLOT_SAMPLES = 240
@@ -263,11 +264,16 @@ class PlotWidget(Widget):
             return
 
         xs = self._xs
-        values = [self._log10(v) for v in self._ys]
         x0, x1 = xs[0], xs[-1]
-        y0, y1 = min(values), max(values)
-        if y0 == y1:
-            y0, y1 = y0 - 1.0, y1 + 1.0
+        low, high = min(self._ys), max(self._ys)
+        if low == high:
+            position = log10(low) if self._log else low
+            positions = [position] * 5
+            shown = [low] * 5
+            y0, y1 = position - 0.5, position + 0.5
+        else:
+            positions, shown = scale_ticks(low, high, 5, self._log)
+            y0, y1 = positions[0], positions[-1]
         pad = (y1 - y0) * 0.06
         y0 -= pad
         y1 += pad
@@ -278,13 +284,14 @@ class PlotWidget(Widget):
         def py(y):
             return bottom + (y - y0) / (y1 - y0) * height
 
+        x_ticks = [x0 + (x1 - x0) * index / 4 for index in range(5)]
+
         with self.canvas:
             Color(0.18, 0.19, 0.23, 1)
-            for index in (1, 2, 3):
-                y = bottom + height * index / 4
-                Line(points=[left, y, left + width, y], width=1)
-                x = left + width * index / 4
-                Line(points=[x, bottom, x, bottom + height], width=1)
+            for tick in positions:
+                Line(points=[left, py(tick), left + width, py(tick)], width=1)
+            for tick in x_ticks[1:-1]:
+                Line(points=[px(tick), bottom, px(tick), bottom + height], width=1)
 
             Color(0.55, 0.57, 0.62, 1)
             Line(points=[left, bottom, left + width, bottom], width=1.2)
@@ -292,24 +299,17 @@ class PlotWidget(Widget):
 
             Color(1.0, 0.72, 0.25, 1)
             points = []
-            for x, y in zip(xs, values):
-                points.extend((px(x), py(y)))
+            for x, y in zip(xs, self._ys):
+                points.extend((px(x), py(log10(y) if self._log else y)))
             Line(points=points, width=1.6)
 
         self._text(self._title, left, self.height - dp(18), size=12, color=(0.95, 0.95, 0.95, 1))
-        self._text('h, km', left + width, self.height - dp(18), size=10, anchor='right')
-        for index in range(5):
-            value = y0 + (y1 - y0) * index / 4
-            shown = 10 ** value if self._log else value
-            self._text(f'{shown:.2g}', left - dp(6), bottom + height * index / 4 - dp(6),
-                       size=9, anchor='right')
-            x = x0 + (x1 - x0) * index / 4
-            self._text(f'{x / 1000:.0f}', left + width * index / 4, dp(8),
-                       size=9, anchor='center')
-
-    @staticmethod
-    def _log10(value):
-        return log10(value) if value > 0 else -12.0
+        self._text(i18n.tr('plot_axis_h'), left + width, self.height - dp(18),
+                   size=10, anchor='right')
+        for tick, value in zip(positions, shown):
+            self._text(f'{value:.2g}', left - dp(6), py(tick) - dp(6), size=9, anchor='right')
+        for tick in x_ticks:
+            self._text(f'{tick / 1000:.0f}', px(tick), dp(8), size=9, anchor='center')
 
     def _text(self, text, x, y, size=10, anchor='left', color=(0.72, 0.74, 0.78, 1)):
         core = CoreLabel(text=text, font_size=sp(size))
@@ -327,7 +327,7 @@ class PlotWidget(Widget):
 class PlotScreen(BoxLayout):
     def on_kv_post(self, base_widget):
         spinner = self.ids.parameter_spinner
-        spinner.values = [symbol for symbol, _, _ in PLOT_PARAMETERS]
+        spinner.values = [item[0] for item in PLOT_PARAMETERS]
         spinner.text = 'P'
         self.ids.span_spinner.values = [f'0 – {span // 1000} km' for span in PLOT_SPANS]
         self.ids.span_spinner.text = self.ids.span_spinner.values[2]
@@ -345,7 +345,11 @@ class PlotScreen(BoxLayout):
         xs = [span * index / (PLOT_SAMPLES - 1) for index in range(PLOT_SAMPLES)]
         states = [compute(height) for height in xs]
         ys = [getattr(state, parameter[1]) for state in states]
-        self.ids.plot.set_data(xs, ys, log=parameter[2], title=symbol)
+        self.ids.plot.set_data(xs, ys, log=parameter[2], title=i18n.tr(parameter[3]))
+
+    def retranslate(self):
+        if self.ids.parameter_spinner.text:
+            self.refresh()
 
 
 class Root(BoxLayout):
@@ -357,6 +361,7 @@ class Root(BoxLayout):
         ids.nav_settings.text = i18n.tr('nav_settings')
         ids.calc_screen.retranslate()
         ids.table_screen.retranslate()
+        ids.plot_screen.retranslate()
 
     def show(self, name):
         self.ids.manager.current = name
