@@ -1,4 +1,10 @@
 bin
 keystores
 .buildozer
+.buildozer_global
+.kivy
+.localdata
 __pycache__
+.pytest_cache
+.ruff_cache
+.venv
