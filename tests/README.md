@@ -82,24 +82,28 @@ Measured with this fixture (worst relative deviation over all kept rows):
 | Parameter | Worst deviation | Where |
 |---|---|---|
 | `T` | 5.6·10⁻⁵ | 165 km |
-| `p` | 3.5·10⁻⁴ (8.1·10⁻³) | 80–120 km (120–150 km) |
-| `rho` | 4.1·10⁻⁴ (8.1·10⁻³) | 80–120 km (120–150 km) |
-| `a` | 2.6·10⁻⁵ | everywhere |
-| `mu` | 3.5·10⁻⁵ | everywhere |
-| `nu` | 8.9·10⁻⁴ | 67.4 km |
+| `p` | 5.6·10⁻⁴ | 322 km |
+| `rho` | 6.2·10⁻⁴ | 113 km |
+| `a` | 3.2·10⁻⁵ | 13.8 km |
+| `mu` | 3.5·10⁻⁵ | 79.6 km |
+| `nu` | 8.4·10⁻⁴ | 67.4 km |
 | `W` | 1.3·10⁻⁴ | 60.4 km |
-| `n` | 3.4·10⁻⁴ (8.2·10⁻³) | 80–120 km (120–150 km) |
-| `lambda` | 1.7·10⁻⁴ (8.2·10⁻³) | 80–120 km (120–150 km) |
-| `M` | 1.0·10⁻³ | 1 100 km |
+| `n` | 4.4·10⁻⁴ | 835 km |
+| `lambda` | 2.8·10⁻⁴ | 82 km |
+| `M` | 1.0·10⁻³ | 1 105 km |
 | `H` | 2.8·10⁻⁴ | −1 750 m |
 
-The 120–150 km layer is the only systematic discrepancy: the standard defines
-it through an approximation polynomial (see the appendix), and that polynomial
-is itself up to ~0.8 % below the tabulated values at 150 km. Because the lower
-(barometric) branch is exact there, pressure, density and concentration have a
-~0.8 % step at the 120 km joint. This is documented by
-`test_known_120_150_km_deviation` and the expected-failure test
+The 120–150 km layer is defined by an approximation polynomial (appendix). It
+reproduces the tabulated values within 3.4·10⁻⁴ over the whole band, but its
+value at the lower endpoint (120 km) is ~0.75 % below the barometric branch, so
+pressure, density and concentration have a narrow step at the 120 km joint; the
+error disappears by 121 km. This is documented by the expected-failure test
 `test_pressure_continuous_at_120_km`.
+
+Historical note: the original code transcribed the `A1` coefficient as
+`-0.561844757e-01` instead of `-5.618444757e-02`, which made the whole 120–150
+km band ~0.8 % low. The transcription was fixed during the refactoring and the
+band now matches the table.
 
 ## Running the tests
 

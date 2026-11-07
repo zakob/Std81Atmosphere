@@ -15,14 +15,14 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-import atmolib as A  # noqa: E402
+import std81 as A  # noqa: E402
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'gost_4401_81.csv')
 
-# The 120-150 km layer is defined by an approximation polynomial (appendix to
-# GOST 4401-81). The polynomial itself departs from the tabulated values by up
-# to ~0.8 % at the 150 km joint, so this band gets a wider tolerance.
-APPROX_BAND = (120_000.0, 150_000.0)
+# The approximations of the appendix are accurate over the tabulated heights.
+# The only known artefact is the joint at 120 km, where the polynomial for the
+# 120-150 km layer starts ~0.75 % below the barometric branch; it is covered by
+# a dedicated test in test_invariants.py.
 
 
 def load_rows():
@@ -39,7 +39,7 @@ class GostReferenceTest(unittest.TestCase):
 
     maxDiff = None
 
-    def check(self, key, function, rtol, band_rtol=None):
+    def check(self, key, function, rtol):
         checked = 0
         for row in ROWS:
             expected = row.get(key)
@@ -55,15 +55,12 @@ class GostReferenceTest(unittest.TestCase):
                     self.assertLessEqual(abs(actual), 1e-6)
                 checked += 1
                 continue
-            tolerance = rtol
-            if band_rtol is not None and APPROX_BAND[0] <= height <= APPROX_BAND[1]:
-                tolerance = band_rtol
             relative = abs(actual - expected) / abs(expected)
             with self.subTest(parameter=key, height=height):
                 self.assertLessEqual(
-                    relative, tolerance,
+                    relative, rtol,
                     f'{key}({height}) = {actual!r}, GOST {expected!r}, '
-                    f'relative error {relative:.2e} > {tolerance:.0e}')
+                    f'relative error {relative:.2e} > {rtol:.0e}')
             checked += 1
         self.assertGreater(checked, 0, f'no reference values for {key}')
 
@@ -71,10 +68,10 @@ class GostReferenceTest(unittest.TestCase):
         self.check('T', A.temperature, rtol=1e-4)
 
     def test_pressure(self):
-        self.check('p', A.pressure, rtol=1e-3, band_rtol=1e-2)
+        self.check('p', A.pressure, rtol=1e-3)
 
     def test_density(self):
-        self.check('rho', A.density, rtol=1e-3, band_rtol=1e-2)
+        self.check('rho', A.density, rtol=1e-3)
 
     def test_sound_speed(self):
         self.check('a', A.sound_speed, rtol=1e-4)
@@ -89,35 +86,16 @@ class GostReferenceTest(unittest.TestCase):
         self.check('W', A.thermal_conductivity, rtol=5e-4)
 
     def test_concentration(self):
-        self.check('n', A.concentration, rtol=1e-3, band_rtol=1e-2)
+        self.check('n', A.concentration, rtol=1e-3)
 
     def test_mean_free_path(self):
-        self.check('lambda', A.free_path, rtol=1e-3, band_rtol=1e-2)
+        self.check('lambda', A.free_path, rtol=1e-3)
 
     def test_molar_weight(self):
         self.check('M', A.molar_weight, rtol=2e-3)
 
     def test_geopotential_height(self):
         self.check('H', A.geopotential_height, rtol=5e-4)
-
-    def test_known_120_150_km_deviation(self):
-        """Document the polynomial approximation gap in the 120-150 km layer.
-
-        Both the standard's table and its appendix polynomial are normative;
-        the app follows the polynomial, which is up to ~0.8 % below the table
-        at 150 km (and the branch joint at 120 km is not exactly closed).
-        This test fails if the gap grows beyond 1 %.
-        """
-        worst = 0.0
-        for row in ROWS:
-            height = row['h']
-            if not (APPROX_BAND[0] <= height <= APPROX_BAND[1]):
-                continue
-            expected = row.get('p')
-            if expected is None:
-                continue
-            worst = max(worst, abs(A.pressure(height) - expected) / expected)
-        self.assertLess(worst, 1e-2, f'120-150 km pressure gap is {worst:.2e}')
 
 
 class LayerBoundaryTest(unittest.TestCase):

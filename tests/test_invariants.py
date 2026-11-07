@@ -9,17 +9,15 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-import atmolib as A  # noqa: E402
-
-R = 8.314
-GAMMA = 1.4
+import std81 as A  # noqa: E402
+from std81.constants import GAMMA, R  # noqa: E402
 
 # Geometric heights of the layer boundaries (table 1 of the appendix).
 BREAKPOINTS = [0, 11019, 20063, 32162, 47350, 51412, 71802, 86152, 95411, 104128, 120000]
 
 # The 120 km joint is not closed exactly: the lower branch is barometric, the
-# upper one uses the concentration polynomial.  The step is ~0.8 % (see
-# tests/README.md); everywhere else the function is continuous.
+# upper one starts with the approximation polynomial for 120-150 km, which is
+# ~0.75 % below it at the boundary (the error vanishes by 121 km).
 JOINT_120_KM = 120000
 
 
@@ -125,10 +123,13 @@ class ContinuityTest(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_pressure_continuous_at_120_km(self):
-        """Known issue: the 120 km joint is not closed (~0.8 % step).
+        """Known issue: the 120 km joint is not closed (~0.75 % step).
 
-        Remove this decorator once the upper branch is anchored to the
-        barometric value; an unexpected success means the issue is fixed.
+        The appendix approximates the 120-150 km layer with a polynomial whose
+        value at the lower endpoint differs from the barometric branch.
+        Remove this decorator once the branch is anchored (e.g. by
+        interpolating the tabulated values instead of the polynomial); an
+        unexpected success means the issue is fixed.
         """
         low = A.pressure(JOINT_120_KM - self.EPS)
         high = A.pressure(JOINT_120_KM + self.EPS)
