@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  IMAGE: ghcr.io/kivy/buildozer:latest
+
 jobs:
   debug-apk:
     name: Debug APK
@@ -17,25 +20,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache Buildozer global directory
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h /
+
+      - name: Cache buildozer
         uses: actions/cache@v4
         with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-global-
+          path: ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-
 
       - name: Build debug APK
-        id: buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          command: buildozer android debug
-          buildozer_version: stable
+        run: |
+          docker run --rm \
+            --volume "$HOME/.buildozer":/home/user/.buildozer \
+            --volume "$PWD":/home/user/hostcwd \
+            "$IMAGE" android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: std81-debug-apk
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
           if-no-files-found: error
 
   release-apk:
@@ -46,32 +54,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h /
+
       - name: Decode the release keystore
         run: |
           mkdir -p keystores
           printf '%s' "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystores/release.keystore
 
-      - name: Cache Buildozer global directory
+      - name: Cache buildozer
         uses: actions/cache@v4
         with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-global-
+          path: ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-
 
       - name: Build release APK
-        id: buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          command: buildozer android release
-          buildozer_version: stable
         env:
-          P4A_RELEASE_KEYSTORE: /github/workspace/keystores/release.keystore
+          P4A_RELEASE_KEYSTORE: /home/user/hostcwd/keystores/release.keystore
           P4A_RELEASE_KEYSTORE_PASSWD: ${{ secrets.KEYSTORE_PASSWORD }}
           P4A_RELEASE_KEYALIAS: ${{ secrets.KEY_ALIAS }}
           P4A_RELEASE_KEYALIAS_PASSWD: ${{ secrets.KEY_ALIAS_PASSWORD }}
+        run: |
+          docker run --rm \
+            --volume "$HOME/.buildozer":/home/user/.buildozer \
+            --volume "$PWD":/home/user/hostcwd \
+            --env P4A_RELEASE_KEYSTORE \
+            --env P4A_RELEASE_KEYSTORE_PASSWD \
+            --env P4A_RELEASE_KEYALIAS \
+            --env P4A_RELEASE_KEYALIAS_PASSWD \
+            "$IMAGE" android release
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.buildozer.outputs.filename }}
+          files: bin/*.apk
           generate_release_notes: true

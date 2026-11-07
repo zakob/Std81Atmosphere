@@ -123,14 +123,20 @@ base64 -w0 keystores/std81atmosphere.keystore
 
 * `ci.yml` — `actions/checkout`, `actions/setup-python` (Python 3.11, как в
   Android-сборке), установка `requirements-dev.txt`, затем `ruff` и `pytest`.
-* `android.yml` — сборка через
-  [`ArtemSBulgakov/buildozer-action`](https://github.com/ArtemSBulgakov/buildozer-action):
-  внутри Docker-образа `kivy/buildozer` выполняется `buildozer android debug`
-  или `buildozer android release`.
-* Кэш `.buildozer_global` (Android SDK/NDK) ускоряет повторные сборки.
+* `android.yml` — запускает официальный образ `ghcr.io/kivy/buildozer:latest`
+  через `docker run`: проект монтируется в `/home/user/hostcwd`, внутри
+  выполняется `buildozer android debug` или `buildozer android release`.
+  Официальный `entrypoint.sh` сам подставляет UID/GID хозяина каталога и
+  сохраняет переменные окружения (поэтому `P4A_RELEASE_*` доходят до p4a).
+* Шаг **Free disk space** удаляет предустановленный Android SDK и .NET с
+  раннера: они не нужны (buildozer качает свой SDK/NDK в `~/.buildozer`) и
+  занимают около 11 ГБ.
+* Кэш `~/.buildozer` (Android SDK/NDK и зависимости) ускоряет повторные сборки.
 * Подпись release-сборки — через переменные `P4A_RELEASE_KEYSTORE`,
   `P4A_RELEASE_KEYSTORE_PASSWD`, `P4A_RELEASE_KEYALIAS`,
-  `P4A_RELEASE_KEYALIAS_PASSWD`; keystore декодируется из секрета перед сборкой.
+  `P4A_RELEASE_KEYALIAS_PASSWD`; keystore декодируется из секрета в
+  `keystores/release.keystore` и виден в контейнере как
+  `/home/user/hostcwd/keystores/release.keystore`.
 
 ---
 
@@ -152,7 +158,9 @@ base64 -w0 keystores/std81atmosphere.keystore
 | Job упал на `pip install` | доступность PyPI, синтаксис `requirements-dev.txt` |
 | `ruff` нашёл ошибки | запустите `ruff check .` локально и исправьте |
 | Нет APK в артефактах | лог шага **Build**; часто это ошибка в `buildozer.spec` или нехватка места |
-| Ошибка подписи | секреты `KEYSTORE_*`, путь `/github/workspace/keystores/release.keystore` |
+| `docker: Error response ... pull access denied` | образ `ghcr.io/kivy/buildozer:latest` недоступен; перезапустите job или проверьте доступ к ghcr.io |
+| Ошибка подписи | секреты `KEYSTORE_*`; в контейнере keystore должен быть по пути `/home/user/hostcwd/keystores/release.keystore` |
+| `No space left on device` | шаг **Free disk space** освобождает ~11 ГБ; при повторе можно удалить ещё `/opt/hostedtoolcache` |
 | Сборка долго висит | первый запуск качает SDK/NDK; последующие должны идти быстрее |
 
 Логи всегда доступны на странице запуска: **Actions → запуск → job → шаг**.
