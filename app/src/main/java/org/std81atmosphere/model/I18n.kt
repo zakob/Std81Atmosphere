@@ -11,7 +11,7 @@ object I18n {
         EN("English"),
     }
 
-    private val strings: Map<Language, Map<String, String>> = mapOf(
+    internal val strings: Map<Language, Map<String, String>> = mapOf(
         Language.RU to mapOf(
             "app_title" to "Стандартная атмосфера",
             "nav_calc" to "Расчёт",
