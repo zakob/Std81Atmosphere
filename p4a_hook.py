@@ -1,10 +1,15 @@
-"""p4a hooks: disable the window hardware acceleration flag.
+"""p4a hooks: make the window as HWUI-inert as possible.
 
-On some ColorOS 16 / Android 16 devices the system HWUI renderer crashes when
-Kivy/SDL applications start (SIGSEGV in the RenderThread and "pthread_mutex_lock
-called on a destroyed mutex" in the hwuiTask threads).  Kivy draws on its own
-SurfaceView/OpenGL surface, so the window itself does not need hardware
-acceleration; disabling it avoids that HWUI code path.
+On Android 16 / ColorOS 16 the system added a FORTIFY check that aborts on
+"pthread_mutex_lock called on a destroyed mutex" (bionic change).  This turns
+a pre-existing renderer race into a SIGABRT for Kivy/SDL apps: at startup with
+newer p4a, and on input focus (keyboard/insets) even with the old toolchain.
+The crashing threads are the HWUI renderer threads (RenderThread, hwuiTask).
+
+Kivy draws on its own SurfaceView/OpenGL surface, so the window itself does
+not need hardware acceleration; disabling it removes the HWUI render threads
+from the process.  With the keyboard shown, ``adjustNothing`` prevents any
+window resize/pan, avoiding the insets code path as well.
 
 The manifest is rendered *after* the ``before_apk_build`` hook, so the actual
 patch happens in ``after_apk_build`` (right before the gradle assemble).  The
@@ -18,16 +23,39 @@ import os
 def _patch_file(path):
     with open(path, encoding='utf-8') as stream:
         text = stream.read()
-    updated = text.replace(
-        'android:hardwareAccelerated="true"',
-        'android:hardwareAccelerated="false"',
-    )
-    if updated != text:
+    original = text
+
+    # Force hardware acceleration off (replace, or add when absent).
+    if 'android:hardwareAccelerated="true"' in text:
+        text = text.replace(
+            'android:hardwareAccelerated="true"',
+            'android:hardwareAccelerated="false"',
+        )
+        reinforced = True
+    elif 'android:hardwareAccelerated="false"' in text:
+        reinforced = True
+    else:
+        text = text.replace('<application ', '<application android:hardwareAccelerated="false" ')
+        reinforced = 'hardwareAccelerated added'
+
+    # Do not resize the window when the soft keyboard is shown.
+    if 'android:windowSoftInputMode' not in text:
+        text = text.replace(
+            '<activity ',
+            '<activity android:windowSoftInputMode="adjustNothing" ',
+        )
+        softinput = 'added'
+    else:
+        softinput = 'already set'
+
+    if text != original:
         with open(path, 'w', encoding='utf-8') as stream:
-            stream.write(updated)
-        print('[p4a hook] patched {}: hardwareAccelerated true -> false'.format(path))
+            stream.write(text)
+        print('[p4a hook] patched {}: hwaccel={}, softinputMode={}'.format(
+            path, reinforced, softinput))
         return 1
-    print('[p4a hook] {}: hardwareAccelerated already false or absent'.format(path))
+    print('[p4a hook] {}: no changes needed (hwaccel={}, softinput={})'.format(
+        path, reinforced, softinput))
     return 0
 
 
@@ -51,7 +79,6 @@ def after_apk_build(toolchain):
         print('[p4a hook] WARNING: no dist_dir at {}'.format(dist_dir))
         return
 
-    print('[p4a hook] dist_dir contents: {}'.format(sorted(os.listdir(dist_dir))[:20]))
     manifests = _find_manifests(dist_dir)
     print('[p4a hook] manifests found: {}'.format(manifests))
     patched = 0
