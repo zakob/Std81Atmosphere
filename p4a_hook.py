@@ -1,20 +1,21 @@
-"""p4a hooks: make the window as HWUI-inert as possible.
+"""p4a hook: keep the window resize-inert when the soft keyboard appears.
 
-On Android 16 / ColorOS 16 the system added a FORTIFY check that aborts on
-"pthread_mutex_lock called on a destroyed mutex" (bionic change).  This turns
-a pre-existing renderer race into a SIGABRT for Kivy/SDL apps: at startup with
-newer p4a, and on input focus (keyboard/insets) even with the old toolchain.
-The crashing threads are the HWUI renderer threads (RenderThread, hwuiTask).
+On Android 16 / ColorOS 16 a FORTIFY check in bionic aborts on
+"pthread_mutex_lock called on a destroyed mutex", exposing a pre-existing
+renderer race in this ROM.  For this app the crash was observed on input focus
+when the keyboard triggers a window insets change.
 
-Kivy draws on its own SurfaceView/OpenGL surface, so the window itself does
-not need hardware acceleration; disabling it removes the HWUI render threads
-from the process.  With the keyboard shown, ``adjustNothing`` prevents any
-window resize/pan, avoiding the insets code path as well.
+Earlier experiments showed that disabling ``hardwareAccelerated`` made the
+focus crash *worse* (a software-rendered window plus IME is a known-bad
+combination on some ROMs), so this hook only adds
+``android:windowSoftInputMode='adjustNothing'``: with it the window neither
+resizes nor pans when the keyboard shows, so the insets path is not taken at
+all.  The height field sits at the top of the screen, so a covering keyboard
+is not a problem.
 
-The manifest is rendered *after* the ``before_apk_build`` hook, so the actual
-patch happens in ``after_apk_build`` (right before the gradle assemble).  The
-hook logs every action so a build log shows whether the manifest was patched.
-See https://github.com/kivy/python-for-android#hooks for the hook protocol.
+The manifest is rendered *after* the ``before_apk_build`` hook, so the patch
+happens in ``after_apk_build``.  See
+https://github.com/kivy/python-for-android#hooks for the hook protocol.
 """
 
 import os
@@ -25,20 +26,6 @@ def _patch_file(path):
         text = stream.read()
     original = text
 
-    # Force hardware acceleration off (replace, or add when absent).
-    if 'android:hardwareAccelerated="true"' in text:
-        text = text.replace(
-            'android:hardwareAccelerated="true"',
-            'android:hardwareAccelerated="false"',
-        )
-        reinforced = True
-    elif 'android:hardwareAccelerated="false"' in text:
-        reinforced = True
-    else:
-        text = text.replace('<application ', '<application android:hardwareAccelerated="false" ')
-        reinforced = 'hardwareAccelerated added'
-
-    # Do not resize the window when the soft keyboard is shown.
     if 'android:windowSoftInputMode' not in text:
         text = text.replace(
             '<activity ',
@@ -51,11 +38,9 @@ def _patch_file(path):
     if text != original:
         with open(path, 'w', encoding='utf-8') as stream:
             stream.write(text)
-        print('[p4a hook] patched {}: hwaccel={}, softinputMode={}'.format(
-            path, reinforced, softinput))
+        print('[p4a hook] patched {}: softinputMode={}'.format(path, softinput))
         return 1
-    print('[p4a hook] {}: no changes needed (hwaccel={}, softinput={})'.format(
-        path, reinforced, softinput))
+    print('[p4a hook] {}: no changes needed (softinput={})'.format(path, softinput))
     return 0
 
 
