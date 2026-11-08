@@ -49,7 +49,11 @@ requirements = python3==3.12.8,hostpython3==3.12.8,kivy==2.3.1,sdl2
 # requirements.source.kivy = ../../kivy
 
 # (str) Presplash of the application
-presplash.filename = %(source.dir)s/data/icon.png
+# Disabled: the starting window is rendered by the system HWUI renderer, and on
+# ColorOS 16 (Android 16) it crashes at startup (SIGSEGV in RenderThread /
+# "pthread_mutex_lock called on a destroyed mutex" in hwuiTask).  Removing the
+# splash reduces what HWUI has to draw during startup.
+#presplash.filename = %(source.dir)s/data/icon.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/data/icon.png
@@ -104,7 +108,10 @@ fullscreen = 0
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-android.api = 35
+# 34 instead of 35: targetSdk 35 enforces edge-to-edge on Android 15/16, which
+# changes window insets handling and is implicated in ColorOS 16 HWUI startup
+# crashes with Kivy/SDL apps.
+android.api = 34
 #android.api = 27
 
 # (int) Minimum API your APK / AAB will support.
@@ -327,7 +334,10 @@ p4a.branch = master
 #p4a.local_recipes =
 
 # (str) Filename to the hook for p4a
-#p4a.hook =
+# Disables the window hardware acceleration flag: on ColorOS 16 the HWUI
+# renderer crashes at startup for Kivy/SDL apps (SIGSEGV in RenderThread).
+# Kivy draws on its own SurfaceView, so the window itself does not need HWUI.
+p4a.hook = %(source.dir)s/p4a_hook.py
 
 # (str) Bootstrap to use for android builds
 #p4a.bootstrap = sdl2

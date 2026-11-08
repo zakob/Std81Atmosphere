@@ -162,6 +162,7 @@ base64 -w0 keystores/std81atmosphere.keystore
 | Ошибка подписи | секреты `KEYSTORE_*`; в контейнере keystore должен быть по пути `/home/user/hostcwd/keystores/release.keystore` |
 | `No space left on device` | шаг **Free disk space** освобождает ~11 ГБ; при повторе можно удалить ещё `/opt/hostedtoolcache` |
 | Ошибки компиляции Kivy (`_PyInterpreterState_GetConfig`, `Py_UNICODE`, `glShaderSource`) | слишком новый Python или старый Kivy; в `buildozer.spec` зафиксированы Python 3.12.8 и Kivy 2.3.1 — не убирайте пины |
+| Приложение сразу закрывается, в логе `Fatal signal 11 (SIGSEGV)` в `RenderThread` / `pthread_mutex_lock called on a destroyed mutex` в `hwuiTask` | краш системного HWUI-рендерера на ColorOS 16/Android 16. Лечится: `android.api = 34`, отключение presplash и `p4a.hook = p4a_hook.py` (выключает `hardwareAccelerated` в манифесте). Не удаляйте эти строки из спека без проверки на своём устройстве |
 | `python3 should have same version as hostpython3` | пин `hostpython3` должен совпадать с `python3`; в спеке зафиксированы оба (`3.12.8`) |
 | Сборка долго висит | первый запуск качает SDK/NDK; последующие должны идти быстрее |
 
