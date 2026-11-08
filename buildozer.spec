@@ -317,8 +317,8 @@ android.display_cutout = never
 #p4a.fork = kivy
 
 # (str) python-for-android branch to use, defaults to master
-p4a.branch = master
-#p4a.branch = develop
+#p4a.branch = master
+p4a.branch = develop
 
 # (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
 # Pinned to 2025-04-12: the last-known-working APK 0.9 was built with this
