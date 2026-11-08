@@ -12,7 +12,6 @@ hook logs every action so a build log shows whether the manifest was patched.
 See https://github.com/kivy/python-for-android#hooks for the hook protocol.
 """
 
-import glob
 import os
 
 
@@ -59,4 +58,5 @@ def after_apk_build(toolchain):
     for path in manifests:
         patched += _patch_file(path)
     if patched == 0:
-        print('[p4a hook] WARNING: no manifest patched ({} manifests checked)'.format(len(manifests)))
+        message = '[p4a hook] WARNING: no manifest patched ({} manifests checked)'
+        print(message.format(len(manifests)))
