@@ -434,7 +434,6 @@ class SettingsPopup(Popup):
 class AtmoApp(App):
     def build(self):
         Window.clearcolor = (0.07, 0.08, 0.10, 1)
-        Window.softinput_mode = 'below_target'
         self.store = self._open_store()
         if self.store is not None and self.store.exists('language'):
             try:

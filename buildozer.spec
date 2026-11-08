@@ -107,9 +107,10 @@ fullscreen = 0
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-# 35 to match the era of the last known-working APK (0.9); the ColorOS 16 HWUI
-# crash is not affected by targetSdk (both 34 and 35 crash with the new p4a).
-android.api = 35
+# 34: targetSdk 34 does not enforce edge-to-edge on Android 15/16, so the
+# content respects the status bar and cutout (targetSdk 35 draws behind them,
+# which also matches the ColorOS 16 keyboard/HWUI crash on input focus).
+android.api = 34
 #android.api = 27
 
 # (int) Minimum API your APK / AAB will support.
