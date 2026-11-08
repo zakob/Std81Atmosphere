@@ -1,10 +1,29 @@
-bin
-keystores
-.buildozer
-.buildozer_global
-.kivy
-.localdata
-__pycache__
-.pytest_cache
-.ruff_cache
-.venv
+# Gradle / Android Studio
+local.properties
+.gradle/
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Local secrets and build artifacts
+keystores/
+bin/
+*.jks
+*.keystore
+
+# Old Kivy/buildozer leftovers
+.buildozer/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

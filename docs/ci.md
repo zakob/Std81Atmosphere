@@ -1,169 +1,90 @@
 # Сборка и проверки на GitHub Actions
 
-В репозитории два workflow-файла:
+Единый workflow `.github/workflows/android.yml` с тремя джобами:
 
-| Файл | Когда запускается | Что делает | Время |
+| Джоба | Когда | Что делает | Время |
 |---|---|---|---|
-| `.github/workflows/ci.yml` | каждый push в любую ветку и каждый pull request | `ruff check .` и `pytest -q` | ~1 минута |
-| `.github/workflows/android.yml` | вручную (кнопка **Run workflow**) | debug APK, выкладывается артефактом | 10–60 минут |
-| `.github/workflows/android.yml` | push тега `v*` | подписанный release APK + GitHub Release | 10–60 минут |
+| `test` | каждый push в любую ветку и каждый PR | `gradle testDebugUnitTest lintDebug` | ~2–5 мин |
+| `debug-apk` | вручную (кнопка **Run workflow**) | `gradle assembleDebug`, APK артефактом | ~5–10 мин |
+| `release-apk` | push тега `v*` | подписанный release-APK + GitHub Release | ~5–10 мин |
 
 ---
 
-## 1. Где смотреть результаты
+## 1. Проверки на каждый push
 
-1. Откройте репозиторий на GitHub.
-2. Вкладка **Actions**.
-3. Слева выберите нужный workflow (`CI` или `Android`).
-4. Нажмите на конкретный запуск — там логи по шагам и артефакты.
-
-Зелёная галочка — успех, красный крестик — ошибка (откройте шаг с ошибкой и
-посмотрите лог).
-
----
-
-## 2. Проверки на каждый push (CI)
-
-Ничего настраивать не нужно: после push в ветку GitHub сам запустит `CI`
-и покажет результат во вкладке Actions.
-
-Локально те же проверки можно повторить:
+Ничего настраивать не нужно — после `git push` откройте вкладку **Actions**:
+GK будет запуск `Android / test` (unit-тесты + lint). Локально то же самое:
 
 ```sh
-python -m pip install -r requirements-dev.txt
-ruff check .
-pytest -q
+gradle testDebugUnitTest lintDebug
 ```
 
-Если у вас нет Python — тесты также запускаются стандартным `unittest`:
+JDK 17 обязателен (AGP 8.7/Kotlin 2.0).
 
-```sh
-python -m unittest discover -s tests -v
-```
+## 2. Ручная сборка debug APK
 
----
+Workflow должен существовать в ветке по умолчанию (`main`):
 
-## 3. Ручная сборка debug APK
+1. **Actions → Android → Run workflow** → выбрать `main` → **Run workflow**.
+2. Дождаться окончания, внизу страницы — **Artifacts → std81-debug-apk** (zip, внутри `.apk`).
 
-Нужен, когда хочется проверить приложение на телефоне без релиза.
+Debug APK подписан debug-ключом, для проверки на телефоне достаточно.
 
-1. Workflow `Android` должен быть в ветке **main** (GitHub показывает кнопку
-   **Run workflow** только для workflow, которые есть в ветке по умолчанию).
-   Поэтому сначала влейте ветку с этими файлами в `main`.
-2. GitHub → **Actions** → **Android** → кнопка **Run workflow** (справа).
-3. Выберите ветку (обычно `main`) → **Run workflow**.
-4. Дождитесь окончания (первый запуск самый долгий: скачиваются Android
-   SDK/NDK).
-5. Внизу страницы запуска появится блок **Artifacts** → `std81-debug-apk`.
-   Скачайте zip и распакуйте — внутри `.apk`.
+## 3. Release APK по тегу
 
-Debug APK подписан отладочным ключом, для личного использования этого
-достаточно.
-
----
-
-## 4. Release APK по тегу
-
-1. Убедитесь, что CI на нужном коммите зелёный.
-2. При необходимости поднимите версию в `buildozer.spec` (`version = 0.9`).
+1. Убедитесь, что `test` зелёный на `main`.
+2. При необходимости поднимите `versionName`/`versionCode` в
+   `app/build.gradle.kts` (версии должны расти между релизами: 1.0.0 → 1.0.1).
 3. Создайте и отправьте тег:
 
    ```sh
-   git tag v0.9.0
-   git push origin v0.9.0
+   git tag -a v1.0.0 -m "Std81Atmosphere 1.0.0"
+   git push origin v1.0.0
    ```
 
-4. GitHub запустит workflow `Android`, job **Release APK**:
-   - соберёт APK, подписанный вашим ключом;
-   - создаст **GitHub Release** с тегом `v0.9.0`;
-   - прикрепит APK к релизу.
-5. Готовый файл можно скачать на вкладке **Releases**.
+4. `release-apk` соберёт **подписанный** APK и создаст GitHub Release с файлом.
 
-Release собирается только для тегов, начинающихся с `v` (`v0.9.0`,
-`v1.0.0`, …).
+## 4. Секреты для подписи
 
----
-
-## 5. Секреты для подписи
-
-Подпись release-сборки настраивается один раз:
-
-**Settings → Secrets and variables → Actions → New repository secret**
+**Settings → Secrets and variables → Actions → New repository secret**:
 
 | Имя | Значение |
 |---|---|
 | `KEYSTORE_BASE64` | содержимое keystore-файла в base64 (одна строка) |
 | `KEYSTORE_PASSWORD` | пароль хранилища |
-| `KEY_ALIAS` | псевдоним ключа (в текущем keystore — `std81`) |
+| `KEY_ALIAS` | псевдоним ключа (текущий — `std81`) |
 | `KEY_ALIAS_PASSWORD` | пароль ключа |
 
-Получить base64 (PowerShell):
+Base64 (PowerShell):
 
 ```powershell
 [Convert]::ToBase64String(
-    [IO.File]::ReadAllBytes("C:\Users\Mi\projects\Std81Atmosphere\keystores\std81atmosphere.keystore")
+  [IO.File]::ReadAllBytes("путь\к\keystore.jks")
 ) | Set-Clipboard
 ```
 
-Linux/macOS:
+Workflow декодирует keystore в `keystores/release.keystore` и передаёт путь и
+пароли через переменные окружения `RELEASE_KEYSTORE_*` (их читает
+`app/build.gradle.kts` из `System.getenv`).
 
-```sh
-base64 -w0 keystores/std81atmosphere.keystore
-```
+**Важно:** keystore и пароли не должны попадать в git (`keystores/` в
+`.gitignore`). Потеря ключа = невозможность обновить установленное
+приложение.
 
-Вставьте полученную строку целиком в секрет `KEYSTORE_BASE64`.
+## 5. Права GitHub Actions
 
-> **Важно.** Keystore и пароли не должны попадать в git — каталог `keystores/`
-> уже в `.gitignore`. Если файл или пароль когда-либо утекал, выпустите новый
-> ключ: приложение, подписанное другим ключом, нельзя обновить поверх старого.
+**Settings → Actions → General → Workflow permissions → Read and write
+permissions** — иначе шаг публикации Release может упасть с 403.
 
----
-
-## 6. Как это устроено
-
-* `ci.yml` — `actions/checkout`, `actions/setup-python` (Python 3.11, как в
-  Android-сборке), установка `requirements-dev.txt`, затем `ruff` и `pytest`.
-* `android.yml` — запускает официальный образ `ghcr.io/kivy/buildozer:latest`
-  через `docker run`: проект монтируется в `/home/user/hostcwd`, внутри
-  выполняется `buildozer android debug` или `buildozer android release`.
-  Официальный `entrypoint.sh` сам подставляет UID/GID хозяина каталога и
-  сохраняет переменные окружения (поэтому `P4A_RELEASE_*` доходят до p4a).
-* Шаг **Free disk space** удаляет предустановленный Android SDK и .NET с
-  раннера: они не нужны (buildozer качает свой SDK/NDK в `~/.buildozer`) и
-  занимают около 11 ГБ.
-* Кэш `~/.buildozer` (Android SDK/NDK и зависимости) ускоряет повторные сборки.
-* Подпись release-сборки — через переменные `P4A_RELEASE_KEYSTORE`,
-  `P4A_RELEASE_KEYSTORE_PASSWD`, `P4A_RELEASE_KEYALIAS`,
-  `P4A_RELEASE_KEYALIAS_PASSWD`; keystore декодируется из секрета в
-  `keystores/release.keystore` и виден в контейнере как
-  `/home/user/hostcwd/keystores/release.keystore`.
-
----
-
-## 7. Ограничения и время
-
-* Публичный репозиторий — Actions бесплатны; приватный — 2000 минут в месяц
-  (сборка APK съедает больше всего).
-* Первая сборка APK: ~30–60 минут (скачивание SDK/NDK). С кэшем — обычно
-  10–20 минут.
-* Debug-сборка запускается вручную, чтобы не тратить минуты на каждый push.
-
----
-
-## 8. Если что-то пошло не так
+## 6. Если что-то пошло не так
 
 | Симптом | Что проверить |
 |---|---|
-| Нет кнопки **Run workflow** | workflow ещё не в ветке `main` (или Actions отключены в Settings → Actions → General) |
-| Job упал на `pip install` | доступность PyPI, синтаксис `requirements-dev.txt` |
-| `ruff` нашёл ошибки | запустите `ruff check .` локально и исправьте |
-| Нет APK в артефактах | лог шага **Build**; часто это ошибка в `buildozer.spec` или нехватка места |
-| `docker: Error response ... pull access denied` | образ `ghcr.io/kivy/buildozer:latest` недоступен; перезапустите job или проверьте доступ к ghcr.io |
-| Ошибка подписи | секреты `KEYSTORE_*`; в контейнере keystore должен быть по пути `/home/user/hostcwd/keystores/release.keystore` |
-| `No space left on device` | шаг **Free disk space** освобождает ~11 ГБ; при повторе можно удалить ещё `/opt/hostedtoolcache` |
-| Ошибки компиляции Kivy (`_PyInterpreterState_GetConfig`, `Py_UNICODE`, `glShaderSource`) | слишком новый Python или старый Kivy; в `buildozer.spec` зафиксированы Python 3.12.8 и Kivy 2.3.1 — не убирайте пины |
-| Приложение сразу закрывается, в логе `Fatal signal 11 (SIGSEGV)` в `RenderThread` / `pthread_mutex_lock called on a destroyed mutex` в `hwuiTask` | краш системного HWUI-рендерера на ColorOS 16/Android 16 при старте Kivy/SDL-приложений. Вызывается новым кодом p4a (сплэш/инсеты). Лечится откатом toolchain: `p4a.commit = 58d148bf81e312ae890cb7762ccb9f0f877ee7a4` (2025-04-12) и распинованными `python3,kivy,sdl2` — это состояние, на котором собиралась рабочая 0.9. Не обновляйте p4a без проверки на устройстве |
-| `python3 should have same version as hostpython3` | пин `hostpython3` должен совпадать с `python3`; в спеке зафиксированы оба (`3.12.8`) |
-| Сборка долго висит | первый запуск качает SDK/NDK; последующие должны идти быстрее |
+| Нет кнопки **Run workflow** | workflow ещё не в `main` или Actions отключены |
+| `compileSdk 35 ... unsupported` | AGP < 8.7; обновите `agp` в `gradle/libs.versions.toml` |
+| Ошибка подписи | имена секретов `KEYSTORE_*`, alias, base64 одной строкой |
+| `Release` шаг → 403 | Workflow permissions → Read and write |
+| Нет APK в артефактах | лог шага Build; путь `app/build/outputs/apk/...` |
+| JDK-ошибки | нужен JDK 17 |
 
-Логи всегда доступны на странице запуска: **Actions → запуск → job → шаг**.
+Логи: **Actions → запуск → джоба → шаг**.

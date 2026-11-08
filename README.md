@@ -1,96 +1,88 @@
 # Std81Atmosphere
 
-App for calculating atmosphere parameters on height according **GOST 4401-81**.
+Android app (Kotlin + Jetpack Compose) that calculates the parameters of the
+standard atmosphere according to **GOST 4401-81** for a geometric height from
+−2000 to 1 200 000 m.
+
+The calculation core is pure Kotlin (no Android dependencies) and is verified
+against 1410 reference rows extracted from the tables of the standard.
+
+> The previous Python/Kivy implementation is preserved in the **`kivy-legacy`**
+> branch. This `main` branch is the Kotlin/Jetpack Compose rewrite.
 
 ## Features
 
-* single-height calculation of all standard parameters with tap-to-copy;
-* table of parameters over a height range, exported to the clipboard as CSV;
-* plots of pressure, temperature, density and speed of sound;
-* Russian and English interface, the choice is remembered between runs;
-* no network access and no permissions.
-
-| Calculation | Table | Plot |
-|---|---|---|
-| ![Calculation](docs/calc.png) | ![Table](docs/table.png) | ![Plot](docs/plot.png) |
-
----
+* calculation of 11 parameters for a single height (P, T, ρ, M, n, a, l, μ, ν,
+  W, H), tap a value to copy it;
+* parameter table over a height range with CSV export to the clipboard;
+* plots of P (log), T, ρ (log) and a over spans 0–20/50/100/1200 km;
+* Russian/English interface, the choice is remembered between launches;
+* no permissions, no network access.
 
 ## Project layout
 
 | Path | Purpose |
 |---|---|
-| `main.py`, `atmo.kv` | Kivy application (calculation, table and plot screens) |
-| `std81/` | calculation core, layer table, formatting, translations, range tables |
-| `tests/` | golden tests against the GOST tables and physical invariants |
-| `buildozer.spec` | Android build configuration |
+| `app/src/main/java/org/std81atmosphere/model/` | calculation core: constants, layers, atmosphere, table, formatting, translations |
+| `app/src/main/java/org/std81atmosphere/ui/` | Jetpack Compose screens |
+| `app/src/test/` | JUnit golden tests against the GOST tables + physical invariants |
+| `app/src/test/resources/gost_4401_81.csv` | reference data (1410 rows, tables 1–4 of GOST 4401-81) |
+| `.github/workflows/android.yml` | lint, unit tests, debug and release APK builds |
 
-The core has no Kivy dependency, so it can be used from scripts:
+## The model
+
+`Atmosphere.compute(height)` returns every parameter for one height. The model
+reproduces the layer table of the standard: the layers are keyed by
+geopotential height with pressures anchored at 101325 Pa at h = 0, the upper
+atmosphere (120–1200 km) uses the appendix polynomials, and transport
+properties return `null` above 90 km (the standard does not tabulate them
+there).
+
+Known behaviour, verified by tests:
+
+* `P(0) = 101325 Pa` exactly;
+* worst deviation from the tabulated values is < 1·10⁻³ across the range
+  (T/a/μ are within 1·10⁻⁴);
+* at exactly 120 km the appendix polynomial starts ≈0.75 % below the
+  barometric branch; the step disappears by 121 km.
+
+## Testing
 
 ```sh
-python -m std81 1000
+gradle testDebugUnitTest
 ```
 
-```python
-from std81 import compute
-state = compute(1000)
-print(state.pressure, state.temperature)
+or in Android Studio: right-click `app` → Run all tests. The golden tests read
+`gost_4401_81.csv` from the test resources; tolerances are stated per
+parameter in `GostReferenceTest`.
+
+## Building locally
+
+You need JDK 17 and Android SDK (compileSdk 35). The project does not commit
+the Gradle wrapper jar, so on a fresh machine run once:
+
+```sh
+gradle wrapper --gradle-version 8.10.2   # if you have gradle installed
+./gradlew assembleDebug                  # or just: gradle assembleDebug
 ```
 
----
-
-## Tests
-
-Golden tests compare the calculations with the tables of GOST 4401-81
-(1410 reference rows). No third-party packages are required:
-
-```
-python -m unittest discover -s tests -v
-```
-
-or, if you prefer pytest:
-
-```
-python -m pip install -r requirements-dev.txt
-pytest -q
-```
-
-See [tests/README.md](tests/README.md) for the provenance of the reference data
-and the known deviations of the 120-150 km layer.
-
----
+In Android Studio: open the project root, let it import, then Run. A local
+`assembleRelease` requires the signing environment variables
+(`RELEASE_KEYSTORE_FILE`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`,
+`RELEASE_KEY_ALIAS_PASSWORD`); the debug build needs none.
 
 ## Continuous integration
 
-GitHub Actions run lint and tests on every push, build a debug APK on demand and
-publish a signed APK for every `v*` tag. See [docs/ci.md](docs/ci.md).
+See [docs/ci.md](docs/ci.md): on every push GitHub Actions runs lint and the
+unit tests; a debug APK can be built manually; pushing a `v*` tag builds a
+signed release APK and creates a GitHub Release.
 
----
+## Reference data provenance
 
-## Build for Android
-
-1. Create image with **buildozer** according to https://github.com/kivy/buildozer?tab=readme-ov-file#buildozer-docker-image
-
-2. Run container with **buildozer**:
-```
-docker run --interactive --tty --rm --volume "$HOME/.buildozer":/home/user/.buildozer --volume "$PWD":/home/user/hostcwd --entrypoint /bin/bash kivy/buildozer
-```
-3. Set key if already exists:
-```
-export P4A_RELEASE_KEYSTORE=...
-export P4A_RELEASE_KEYSTORE_PASSWD=...
-export P4A_RELEASE_KEYALIAS_PASSWD=...
-export P4A_RELEASE_KEYALIAS=...
-```
-If it doesn't exist, create it with `keytool` (https://gist.github.com/Guhan-SenSam/fa4ed215ef3419e7b3154de5cb71f641)
-
-4. Run build:
-```
-buildozer android release
-```
-
----
-
-Note:
- - You don't need a key for the debugging build.
- - In WSL you may need to fix the folder `$HOME/.buildozer` rights.
+The CSV reference was extracted from the public text of GOST 4401-81 (tables
+1–4: temperature, pressure, density, speed of sound, viscosities, thermal
+conductivity, concentration, mean free path, molar mass, geopotential height).
+Rows were accepted only after internal-consistency validation (p vs mmHg,
+ρ = p·M/(R·T), n = p/(k·T), λ = 2.332376e-5·T/p, smoothness); 82 of 1492
+parsed rows were rejected as OCR noise of the scanned source. See the
+`kivy-legacy` branch `tests/README.md` for the full extraction notes.
