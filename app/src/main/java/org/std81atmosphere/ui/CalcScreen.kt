@@ -100,14 +100,15 @@ fun CalcScreen(modifier: Modifier = Modifier, onMessage: (String) -> Unit = {}) 
             Text(I18n.tr("nav_calc"))
         }
 
+        val currentState = state
         when {
             error != null -> Text(
                 error.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyLarge,
             )
-            state != null -> ParameterList(
-                state = state!!,
+            currentState != null -> ParameterList(
+                state = currentState,
                 onCopy = { value ->
                     clipboard.setText(AnnotatedString(value))
                     onMessage(I18n.tr("copied_value", "value" to value))
