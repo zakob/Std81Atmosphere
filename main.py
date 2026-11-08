@@ -15,8 +15,8 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.text import Label as CoreLabel
 from kivy.core.window import Window
-from kivy.logger import Logger
 from kivy.graphics import Color, Line, Rectangle
+from kivy.logger import Logger
 from kivy.metrics import dp, sp
 from kivy.properties import StringProperty
 from kivy.storage.jsonstore import JsonStore
