@@ -120,6 +120,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         List(SAMPLES) { index -> span * index / (SAMPLES - 1) }
     }
     val values = remember(parameter.symbol, span) { samples.map { parameter.extract(it) } }
+    val textMeasurer = rememberTextMeasurer()
 
     Canvas(modifier = modifier.fillMaxSize()) {
         if (values.size < 2) return@Canvas
@@ -165,7 +166,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         drawPath(path, Color(0xFFF2B33D), style = Stroke(width = 6f))
 
         // Y axis labels (5 ticks).
-        val tickLabel = rememberTextMeasurer()
+        val tickLabel = textMeasurer
         for (index in 0..4) {
             val value = y0 + (y1 - y0) * index / 4
             val shown = if (parameter.logarithmic) 10.0.pow(value) else value

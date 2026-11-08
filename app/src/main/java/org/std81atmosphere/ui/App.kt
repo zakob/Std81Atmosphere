@@ -1,7 +1,6 @@
 package org.std81atmosphere.ui
 
 import android.content.Context
-import androidx.compose.foundation.layout.items
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -65,13 +64,13 @@ fun App(initialLanguage: String) {
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             NavigationBar {
-                items(currentTab) { selected ->
+                Tab.entries.forEach { item ->
                     NavigationBarItem(
-                        selected = selected,
-                        onClick = { tab = selected.name },
+                        selected = item == currentTab,
+                        onClick = { tab = item.name },
                         icon = {
                             Icon(
-                                imageVector = when (selected) {
+                                imageVector = when (item) {
                                     Tab.CALC -> Icons.Filled.Home
                                     Tab.TABLE -> Icons.Filled.List
                                     Tab.PLOT -> Icons.Filled.Star
@@ -82,7 +81,7 @@ fun App(initialLanguage: String) {
                         },
                         label = {
                             Text(
-                                when (selected) {
+                                when (item) {
                                     Tab.CALC -> I18n.tr("nav_calc")
                                     Tab.TABLE -> I18n.tr("nav_table")
                                     Tab.PLOT -> I18n.tr("nav_plot")
