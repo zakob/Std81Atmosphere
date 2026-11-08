@@ -100,10 +100,14 @@ class InvariantsTest {
 
     @Test
     fun transportPropertiesStopAbove90Km() {
+        // The model (like the standard) defines them for h <= 90 km; above
+        // that strictly they become null.
         for (h in heights(25_000.0, start = 90_000.0, stop = 1_200_000.0)) {
-            assertTrue(Atmosphere.dynamicViscosity(h) == null)
-            assertTrue(Atmosphere.kinematicViscosity(h) == null)
-            assertTrue(Atmosphere.thermalConductivity(h) == null)
+            if (h > Constants.TRANSPORT_MAX_HEIGHT) {
+                assertTrue("dynamic viscosity at $h", Atmosphere.dynamicViscosity(h) == null)
+                assertTrue("kinematic viscosity at $h", Atmosphere.kinematicViscosity(h) == null)
+                assertTrue("thermal conductivity at $h", Atmosphere.thermalConductivity(h) == null)
+            }
         }
     }
 

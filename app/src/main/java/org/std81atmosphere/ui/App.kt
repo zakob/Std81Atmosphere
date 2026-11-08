@@ -3,9 +3,9 @@ package org.std81atmosphere.ui
 import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -72,7 +72,7 @@ fun App(initialLanguage: String) {
                             Icon(
                                 imageVector = when (item) {
                                     Tab.CALC -> Icons.Filled.Home
-                                    Tab.TABLE -> Icons.Filled.List
+                                    Tab.TABLE -> Icons.AutoMirrored.Filled.List
                                     Tab.PLOT -> Icons.Filled.Star
                                     Tab.SETTINGS -> Icons.Filled.Info
                                 },
