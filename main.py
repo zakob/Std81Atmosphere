@@ -15,6 +15,7 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.text import Label as CoreLabel
 from kivy.core.window import Window
+from kivy.logger import Logger
 from kivy.graphics import Color, Line, Rectangle
 from kivy.metrics import dp, sp
 from kivy.properties import StringProperty
@@ -451,11 +452,20 @@ class AtmoApp(App):
         Window.add_widget(self.toast_widget)
 
     def _open_store(self):
+        """Open the settings store, never letting it break startup.
+
+        Storage is optional: if the path is not writable for any reason, the
+        app keeps running with an in-memory store (language persistence off).
+        """
         try:
             base = os.environ.get('STD81_DATA_DIR') or self.user_data_dir
             os.makedirs(base, exist_ok=True)
-            return JsonStore(os.path.join(base, 'settings.json'))
-        except OSError:
+            path = os.path.join(base, 'settings.json')
+            store = JsonStore(path)
+            Logger.info('app: settings store opened at %s', path)
+            return store
+        except Exception as error:  # pragma: no cover - defensive only
+            Logger.warning('app: settings store unavailable: %r', error)
             return None
 
     def toast(self, text):
@@ -474,8 +484,8 @@ class AtmoApp(App):
         if self.store is not None:
             try:
                 self.store.put('language', value=code)
-            except OSError:
-                pass
+            except Exception:  # pragma: no cover - defensive only
+                self.store = None
 
 
 if __name__ == '__main__':
