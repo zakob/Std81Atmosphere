@@ -37,12 +37,11 @@ version = 1.0.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-# python3 is pinned: p4a master builds Python 3.14 by default and Kivy does not
-# compile against it (uses CPython internals removed in 3.14).
-# hostpython3 must have the same version as python3, so pin both.
-# Kivy 2.3.1 is required: 2.3.0 declares glShaderSource with a const mismatch
-# that newer NDK headers reject.
-requirements = python3==3.12.8,hostpython3==3.12.8,kivy==2.3.1,sdl2
+# Unpinned on purpose: p4a is pinned to the 2025-04-12 commit (see p4a.commit),
+# and its default recipes (python 3.11, kivy, sdl2) are the ones that produced
+# the last known-working APK 0.9 on this device.  Newer p4a (Python 3.14 default
+# and its new splash/insets Java code) crashes at startup on ColorOS 16.
+requirements = python3,kivy,sdl2
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -108,10 +107,9 @@ fullscreen = 0
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-# 34 instead of 35: targetSdk 35 enforces edge-to-edge on Android 15/16, which
-# changes window insets handling and is implicated in ColorOS 16 HWUI startup
-# crashes with Kivy/SDL apps.
-android.api = 34
+# 35 to match the era of the last known-working APK (0.9); the ColorOS 16 HWUI
+# crash is not affected by targetSdk (both 34 and 35 crash with the new p4a).
+android.api = 35
 #android.api = 27
 
 # (int) Minimum API your APK / AAB will support.
@@ -325,7 +323,10 @@ p4a.branch = master
 #p4a.branch = develop
 
 # (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
-#p4a.commit = HEAD
+# Pinned to 2025-04-12: the last-known-working APK 0.9 was built with this
+# exact p4a state.  Newer p4a defaults to Python 3.14 and its splash/insets
+# Java code crashes at startup on Android 16 / ColorOS 16.
+p4a.commit = 58d148bf81e312ae890cb7762ccb9f0f877ee7a4
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
 #p4a.source_dir =
