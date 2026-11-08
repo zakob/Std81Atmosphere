@@ -1,2 +1,2 @@
 buildozer==1.5.1
-Kivy==2.3.0
+Kivy==2.3.1

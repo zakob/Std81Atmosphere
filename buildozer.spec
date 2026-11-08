@@ -37,10 +37,12 @@ version = 1.0.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-# python3 is pinned: p4a master builds Python 3.14 by default and Kivy 2.3.0
-# does not compile against it (uses CPython internals removed in 3.14).
+# python3 is pinned: p4a master builds Python 3.14 by default and Kivy does not
+# compile against it (uses CPython internals removed in 3.14).
 # hostpython3 must have the same version as python3, so pin both.
-requirements = python3==3.12.8,hostpython3==3.12.8,kivy==2.3.0,sdl2
+# Kivy 2.3.1 is required: 2.3.0 declares glShaderSource with a const mismatch
+# that newer NDK headers reject.
+requirements = python3==3.12.8,hostpython3==3.12.8,kivy==2.3.1,sdl2
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
