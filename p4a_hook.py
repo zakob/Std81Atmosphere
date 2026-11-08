@@ -1,12 +1,14 @@
 """p4a hook: disable the window hardware acceleration flag.
 
-On ColorOS 16 (Android 16) the system HWUI renderer crashes at app startup for
-Kivy/SDL applications (SIGSEGV in the RenderThread and "pthread_mutex_lock
+On some ColorOS 16 / Android 16 devices the system HWUI renderer crashes when
+Kivy/SDL applications start (SIGSEGV in the RenderThread and "pthread_mutex_lock
 called on a destroyed mutex" in the hwuiTask threads).  Kivy draws on its own
 SurfaceView/OpenGL surface, so the window itself does not need hardware
-acceleration; disabling it avoids the crashing HWUI code path.
+acceleration; disabling it avoids that HWUI code path.
 
-See https://github.com/kivy/python-for-android#hooks for the hook protocol.
+The hook logs every action so a build log shows whether the manifest was
+actually patched.  See https://github.com/kivy/python-for-android#hooks for the
+hook protocol.
 """
 
 import glob
@@ -24,10 +26,10 @@ def before_apk_build(toolchain):
         candidates.append(os.path.join(dist_dir, 'src', 'main', 'AndroidManifest.xml'))
         candidates.append(os.path.join(dist_dir, 'AndroidManifest.xml'))
     if storage_dir:
-        candidates.extend(glob.glob(os.path.join(storage_dir, 'dists', '*',
-                                                 'src', 'main', 'AndroidManifest.xml')))
-        candidates.extend(glob.glob(os.path.join(storage_dir, 'dists', '*',
-                                                 'AndroidManifest.xml')))
+        candidates.extend(
+            glob.glob(os.path.join(storage_dir, 'dists', '*', 'src', 'main', 'AndroidManifest.xml'))
+        )
+        candidates.extend(glob.glob(os.path.join(storage_dir, 'dists', '*', 'AndroidManifest.xml')))
 
     patched = 0
     for path in candidates:
@@ -44,5 +46,8 @@ def before_apk_build(toolchain):
                 stream.write(updated)
             patched += 1
             print('[p4a hook] patched {}: hardwareAccelerated true -> false'.format(path))
+        else:
+            print('[p4a hook] {}: hardwareAccelerated already false or absent'.format(path))
+
     if patched == 0:
         print('[p4a hook] WARNING: no AndroidManifest.xml found to patch')
