@@ -93,8 +93,15 @@ jobs:
           disable-animations: true
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
             adb shell am start -W -n org.std81atmosphere/.MainActivity
-            sleep 6
+            # Wait until our window is focused (cold start on a swiftshader
+            # emulator can take a while before the first frame is drawn).
+            for i in $(seq 1 60); do
+              if adb shell dumpsys window 2>/dev/null | grep -q 'mCurrentFocus.*std81atmosphere'; then break; fi
+              sleep 1
+            done
+            sleep 5
             adb exec-out screencap -p > /tmp/1_calc.png
             # Navigation bar items (1080x2340): centers x=135/405/675/945, y@2080
             adb shell input tap 405 2080
@@ -106,12 +113,15 @@ jobs:
             adb shell input tap 945 2080
             sleep 3
             adb exec-out screencap -p > /tmp/4_settings.png
+            adb logcat -d > /tmp/logcat.txt || true
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
           name: ui-screenshots
-          path: /tmp/*.png
+          path: |
+            /tmp/*.png
+            /tmp/logcat.txt
           if-no-files-found: error
 
   release-apk:
