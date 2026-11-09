@@ -112,7 +112,7 @@ private fun ResultTable(rows: List<AtmosphereState>) {
     // Fixed column widths shared by the header and the data rows, so values
     // stay aligned under their column titles no matter the content.
     val columns = listOf(
-        ColumnSpec(76.dp, Alignment.CenterHorizontally, I18n.tr("table_h")),
+        ColumnSpec(76.dp, Alignment.Center, I18n.tr("table_h")),
         ColumnSpec(128.dp, Alignment.CenterEnd, I18n.tr("table_p")),
         ColumnSpec(76.dp, Alignment.CenterEnd, I18n.tr("table_t")),
         ColumnSpec(104.dp, Alignment.CenterEnd, I18n.tr("table_rho")),
