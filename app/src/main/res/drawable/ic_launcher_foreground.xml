@@ -37,7 +37,6 @@
         android:pathData="M76,26 L76,78"
         android:strokeColor="#8FB3C9"
         android:strokeWidth="3"
-        android:strokeDashArray="2,3"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
     <path
