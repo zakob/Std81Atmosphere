@@ -95,23 +95,19 @@ jobs:
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
             adb shell am start -W -n org.std81atmosphere/.MainActivity
-            # Wait until our window is focused (cold start on a swiftshader
-            # emulator can take a while before the first frame is drawn).
-            for i in $(seq 1 60); do
-              if adb shell dumpsys window 2>/dev/null | grep -q 'mCurrentFocus.*std81atmosphere'; then break; fi
-              sleep 1
-            done
-            sleep 5
+            # Cold start of a debug Compose app on a swiftshader emulator is
+            # slow; give the first frame time to be drawn.
+            sleep 12
             adb exec-out screencap -p > /tmp/1_calc.png
             # Navigation bar items (1080x2340): centers x=135/405/675/945, y@2080
             adb shell input tap 405 2080
-            sleep 3
+            sleep 4
             adb exec-out screencap -p > /tmp/2_table.png
             adb shell input tap 675 2080
-            sleep 3
+            sleep 4
             adb exec-out screencap -p > /tmp/3_plot.png
             adb shell input tap 945 2080
-            sleep 3
+            sleep 4
             adb exec-out screencap -p > /tmp/4_settings.png
             adb logcat -d > /tmp/logcat.txt || true
 
