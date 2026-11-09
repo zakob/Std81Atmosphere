@@ -21,6 +21,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withSave
+import androidx.compose.ui.graphics.rotate
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -125,12 +127,12 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
     Canvas(modifier = modifier.fillMaxSize()) {
         if (values.size < 2) return@Canvas
 
-        val left = 52.dp.toPx()
-        val bottom = 26.dp.toPx()
-        val topPad = 22.dp.toPx()
-        val rightPad = 10.dp.toPx()
-        val plotWidth = size.width - left - rightPad
-        val plotHeight = size.height - bottom - topPad
+        val left = 78.dp.toPx()
+        val right = 14.dp.toPx()
+        val top = 18.dp.toPx()
+        val bottom = 40.dp.toPx()
+        val plotWidth = size.width - left - right
+        val plotHeight = size.height - top - bottom
         if (plotWidth <= 0 || plotHeight <= 0) return@Canvas
 
         val yValues = values.map { if (parameter.logarithmic) log10(it) else it }
@@ -140,21 +142,43 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         val y1 = if (yMin == yMax) yMax + 1.0 else yMax
 
         fun px(x: Double): Float = (left + (x - 0.0) / span * plotWidth).toFloat()
-        fun py(y: Double): Float = (size.height - bottom - (y - y0) / (y1 - y0) * plotHeight).toFloat()
+        fun py(y: Double): Float = (top + (y1 - y) / (y1 - y0) * plotHeight).toFloat()
 
-        // Grid.
-        val gridColor = Color(0xFF2A2E36)
-        for (index in 1..3) {
-            val y = py(y0 + (y1 - y0) * index / 4)
-            drawLine(gridColor, Offset(left, y), Offset(left + plotWidth, y), 1f)
-            val x = px(span * index / 4)
-            drawLine(gridColor, Offset(x, size.height - bottom), Offset(x, py(y0)), 1f)
-        }
-
-        // Axes.
         val axisColor = Color(0xFF8B919C)
-        drawLine(axisColor, Offset(left, size.height - bottom), Offset(left + plotWidth, size.height - bottom), 1.5f)
-        drawLine(axisColor, Offset(left, size.height - bottom), Offset(left, py(y0)), 1.5f)
+        val gridColor = Color(0xFF2A2E36)
+        val labelStyle = TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+        val titleStyle = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+
+        // Ticks.
+        val yTicks: List<Pair<Double, String>> = if (parameter.logarithmic) {
+            val lo = 10.0.pow(y0)
+            val hi = 10.0.pow(y1)
+            buildList {
+                var e = floor(log10(lo)).toInt()
+                while (10.0.pow(e) <= hi * 1.001) {
+                    val v = 10.0.pow(e)
+                    if (v >= lo * 0.999) add(v to formatLogTick(v))
+                    e++
+                }
+            }
+        } else {
+            niceTicks(y0, y1)
+        }
+        val xTicks = niceTicks(0.0, span)
+
+        // Grid + axes + tick marks.
+        for ((value, _) in yTicks) {
+            val y = py(value)
+            drawLine(gridColor, Offset(left, y), Offset(left + plotWidth, y), 1f)
+            drawLine(axisColor, Offset(left - 4.dp.toPx(), y), Offset(left, y), 1.5f)
+        }
+        for (value in xTicks) {
+            val x = px(value)
+            drawLine(gridColor, Offset(x, top), Offset(x, top + plotHeight), 1f)
+            drawLine(axisColor, Offset(x, top + plotHeight), Offset(x, top + plotHeight + 4.dp.toPx()), 1.5f)
+        }
+        drawLine(axisColor, Offset(left, top + plotHeight), Offset(left + plotWidth, top + plotHeight), 1.5f)
+        drawLine(axisColor, Offset(left, top + plotHeight), Offset(left, top), 1.5f)
 
         // Curve.
         val path = Path()
@@ -163,41 +187,82 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
             val y = py(yValues[index])
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        drawPath(path, Color(0xFFF2B33D), style = Stroke(width = 6f))
+        drawPath(path, Color(0xFFF2B33D), style = Stroke(width = 3.dp.toPx()))
 
-        // Y axis labels (5 ticks).
-        val tickLabel = textMeasurer
-        for (index in 0..4) {
-            val value = y0 + (y1 - y0) * index / 4
-            val shown = if (parameter.logarithmic) 10.0.pow(value) else value
-            val label = if (parameter.logarithmic && shown < 1e-3) {
-                String.format(java.util.Locale.ROOT, "%1.1e", shown)
-            } else {
-                String.format(java.util.Locale.ROOT, "%.2g", shown)
-            }
-            val layout = tickLabel.measure(
-                AnnotatedString(label),
-                style = TextStyle(fontSize = 9.sp, fontFamily = FontFamily.Monospace),
-            )
+        // Y tick labels.
+        for ((value, label) in yTicks) {
+            val layout = textMeasurer.measure(AnnotatedString(label), style = labelStyle)
             val y = py(value)
             drawText(layout, topLeft = Offset(left - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2))
         }
 
-        // X axis labels.
-        val hLabel = I18n.tr("plot_axis_h")
-        val hLayout = tickLabel.measure(
-            AnnotatedString(hLabel),
-            style = TextStyle(fontSize = 9.sp, fontFamily = FontFamily.Monospace),
+        // X tick labels (km).
+        for (value in xTicks) {
+            val km = (value / 1000.0).roundToInt()
+            val layout = textMeasurer.measure(AnnotatedString(km.toString()), style = labelStyle)
+            val x = px(value)
+            drawText(layout, topLeft = Offset(x - layout.size.width / 2, top + plotHeight + 6.dp.toPx()))
+        }
+
+        // Axis titles.
+        val xTitleLayout = textMeasurer.measure(
+            AnnotatedString(I18n.tr("plot_axis_h")),
+            style = titleStyle,
         )
-        drawText(hLayout, topLeft = Offset(left + plotWidth - hLayout.size.width, 2.dp.toPx()))
-        for (index in 0..4) {
-            val km = (span * index / 4 / 1000).roundToInt()
-            val label = km.toString()
-            val layout = tickLabel.measure(
-                AnnotatedString(label),
-                style = TextStyle(fontSize = 9.sp, fontFamily = FontFamily.Monospace),
+        drawText(
+            xTitleLayout,
+            topLeft = Offset(left + (plotWidth - xTitleLayout.size.width) / 2, size.height - xTitleLayout.size.height),
+        )
+        val yTitleLayout = textMeasurer.measure(
+            AnnotatedString(I18n.tr(parameter.axisLabelKey)),
+            style = titleStyle,
+        )
+        val yTitleX = 18.dp.toPx()
+        val yTitleY = top + plotHeight / 2
+        withSave {
+            drawContext.canvas.rotate(-90f, yTitleX, yTitleY)
+            drawText(
+                yTitleLayout,
+                topLeft = Offset(yTitleX - yTitleLayout.size.width / 2, yTitleY - yTitleLayout.size.height / 2),
             )
-            drawText(layout, topLeft = Offset(px(span * index / 4) - layout.size.width / 2, size.height - 20.dp.toPx()))
         }
     }
+}
+
+private fun formatLogTick(value: Double): String {
+    val exponent = log10(value).roundToInt()
+    return "10^$exponent"
+}
+
+/** Choose ~[target] "nice" tick values spanning [min, max]. */
+private fun niceTicks(min: Double, max: Double, target: Int = 5): List<Pair<Double, String>> {
+    if (max <= min) return listOf(min to formatTick(min), max to formatTick(max))
+    val raw = (max - min) / target
+    val magnitude = 10.0.pow(floor(log10(raw)))
+    val normalized = raw / magnitude
+    val step = when {
+        normalized >= 5.0 -> 5.0 * magnitude
+        normalized >= 2.0 -> 2.0 * magnitude
+        else -> magnitude
+    }
+    val start = floor(min / step) * step
+    val result = mutableListOf<Pair<Double, String>>()
+    var value = start
+    while (value <= max + step * 1e-6) {
+        if (value >= min - step * 1e-6) result.add(value to formatTick(value))
+        value += step
+    }
+    return result
+}
+
+private fun formatTick(value: Double): String {
+    val abs = kotlin.math.abs(value)
+    val label = if (abs >= 100_000 || (abs < 0.001 && abs > 0)) {
+        String.format(java.util.Locale.ROOT, "%.1e", value)
+    } else if (abs >= 100) {
+        String.format(java.util.Locale.ROOT, "%.0f", value)
+    } else {
+        String.format(java.util.Locale.ROOT, "%.2g", value)
+    }
+    return label
 }

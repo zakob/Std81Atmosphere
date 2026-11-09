@@ -1,6 +1,9 @@
 package org.std81atmosphere.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,12 +21,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
@@ -101,34 +109,63 @@ private fun ResultTable(rows: List<AtmosphereState>) {
         Text(I18n.tr("table_empty"), style = MaterialTheme.typography.bodyMedium)
         return
     }
-    val header = listOf(I18n.tr("table_h"), I18n.tr("table_p"), I18n.tr("table_t"), I18n.tr("table_rho"))
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
+    // Fixed column widths shared by the header and the data rows, so values
+    // stay aligned under their column titles no matter the content.
+    val columns = listOf(
+        ColumnSpec(76.dp, Alignment.CenterHorizontally, I18n.tr("table_h")),
+        ColumnSpec(128.dp, Alignment.End, I18n.tr("table_p")),
+        ColumnSpec(76.dp, Alignment.End, I18n.tr("table_t")),
+        ColumnSpec(104.dp, Alignment.End, I18n.tr("table_rho")),
+    )
+    val cellStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+    val grid = MaterialTheme.colorScheme.outlineVariant
+
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                for (item in header) {
+            Row(Modifier.fillMaxWidth()) {
+                for (column in columns) {
                     Text(
-                        item,
-                        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
-                        modifier = Modifier.weight(1f),
+                        text = column.title,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .width(column.width)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .border(0.5.dp, grid)
+                            .padding(horizontal = 4.dp, vertical = 6.dp),
                     )
                 }
             }
         }
         items(rows.size) { index ->
             val state = rows[index]
-            Text(
-                text = listOf(
-                    Format.number(state.height, 6),
-                    Format.number(state.pressure, 5),
-                    Format.number(state.temperature, 5),
-                    Format.number(state.density, 4),
-                ).joinToString("   "),
-                style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            val rowBackground = if (index % 2 == 0) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant
+            Row(Modifier.fillMaxWidth().background(rowBackground)) {
+                cell(columns[0], Format.number(state.height, 6), cellStyle, grid)
+                cell(columns[1], Format.number(state.pressure, 5), cellStyle, grid)
+                cell(columns[2], Format.number(state.temperature, 5), cellStyle, grid)
+                cell(columns[3], Format.number(state.density, 4), cellStyle, grid)
+            }
         }
+    }
+}
+
+private data class ColumnSpec(val width: Dp, val align: Alignment.Horizontal, val title: String)
+
+@Composable
+private fun cell(column: ColumnSpec, value: String, style: TextStyle, grid: Color) {
+    Box(
+        modifier = Modifier
+            .width(column.width)
+            .border(0.5.dp, grid)
+            .padding(horizontal = 4.dp, vertical = 5.dp),
+        contentAlignment = column.align,
+    ) {
+        Text(text = value, style = style)
     }
 }

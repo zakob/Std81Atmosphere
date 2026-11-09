@@ -27,6 +27,9 @@ __pycache__/
 # Local build toolchain (JDK, Gradle, Android SDK) - never commit
 .toolchain/
 
+# Screenshots dropped by the user for visual checks
+screenshots/
+
 # OS
 .DS_Store
 Thumbs.db

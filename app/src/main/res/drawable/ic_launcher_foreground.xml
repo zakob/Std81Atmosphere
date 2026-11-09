@@ -1,30 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Simple motif: three atmosphere layers (arcs) above a ground line. -->
+<!-- Atmosphere motif: sun, layered arcs, an altitude axis with a marker,
+     and a ground line. Content is kept inside the 66dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Sun -->
     <path
-        android:pathData="M20,68 Q34,60 54,60"
-        android:strokeColor="#F2B33D"
+        android:pathData="M73,27 m-6.5,0 a6.5,6.5 0 1,1 13,0 a6.5,6.5 0 1,1 -13,0"
+        android:fillColor="#FFD166" />
+
+    <!-- Atmosphere layers (arcs) -->
+    <path
+        android:pathData="M27,70 Q40,62 56,62"
+        android:strokeColor="#EAF2F8"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
     <path
-        android:pathData="M20,54 Q38,44 54,44"
-        android:strokeColor="#F2B33D"
+        android:pathData="M27,56 Q43,46 56,46"
+        android:strokeColor="#EAF2F8"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
     <path
-        android:pathData="M20,40 Q42,30 54,30"
+        android:pathData="M27,42 Q47,32 56,32"
         android:strokeColor="#F2B33D"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
+
+    <!-- Altitude axis with marker -->
     <path
-        android:pathData="M20,80 L88,80"
+        android:pathData="M76,26 L76,78"
+        android:strokeColor="#8FB3C9"
+        android:strokeWidth="3"
+        android:strokeDashArray="2,3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M76,18 L71,26 L81,26 Z"
+        android:fillColor="#F2B33D" />
+
+    <!-- Ground line -->
+    <path
+        android:pathData="M22,84 L86,84"
         android:strokeColor="#8FB3C9"
         android:strokeWidth="4"
         android:strokeLineCap="round"
