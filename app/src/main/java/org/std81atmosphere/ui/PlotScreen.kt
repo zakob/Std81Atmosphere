@@ -19,8 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.rotate
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -102,7 +100,9 @@ fun PlotScreen(modifier: Modifier = Modifier) {
         AtmospherePlot(
             parameter = parameter,
             span = span,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
         )
     }
 }
@@ -123,13 +123,17 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
     }
     val values = remember(parameter.symbol, span) { samples.map { parameter.extract(it) } }
     val textMeasurer = rememberTextMeasurer()
-    // Resolve label colors in the composable scope: drawing text without an
+    // Resolve theme colors in the composable scope: drawing text without an
     // explicit color uses black, which is invisible on the dark theme.
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val titleColor = MaterialTheme.colorScheme.onSurface
+    val curveColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
 
-    Canvas(modifier = modifier.fillMaxSize()) {
+    Canvas(modifier = modifier) {
         if (values.size < 2) return@Canvas
+
+        drawRect(surfaceColor, Offset.Zero, size)
 
         val left = 78.dp.toPx()
         val right = 14.dp.toPx()
@@ -184,14 +188,16 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         drawLine(axisColor, Offset(left, top + plotHeight), Offset(left + plotWidth, top + plotHeight), 1.5f)
         drawLine(axisColor, Offset(left, top + plotHeight), Offset(left, top), 1.5f)
 
-        // Curve.
-        val path = Path()
-        for (index in values.indices) {
-            val x = px(samples[index])
-            val y = py(yValues[index])
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        // Curve: draw short segments explicitly (more robust than a single
+        // stroked path on some renderers).
+        val strokeWidth = 4.dp.toPx()
+        for (index in 1 until values.size) {
+            val x0 = px(samples[index - 1])
+            val y0 = py(yValues[index - 1])
+            val x1 = px(samples[index])
+            val y1 = py(yValues[index])
+            drawLine(curveColor, Offset(x0, y0), Offset(x1, y1), strokeWidth)
         }
-        drawPath(path, Color(0xFFF2B33D), style = Stroke(width = 3.dp.toPx()))
 
         // Y tick labels.
         for (tickValue in yTicks) {

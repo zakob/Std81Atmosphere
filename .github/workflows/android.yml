@@ -99,15 +99,17 @@ jobs:
             # slow; give the first frame time to be drawn.
             sleep 12
             adb exec-out screencap -p > /tmp/1_calc.png
-            # Navigation bar items (1080x2340): centers x=135/405/675/945, y@2080
+            # Table tab, then press "Build" so the table actually has rows.
             adb shell input tap 405 2080
-            sleep 4
+            sleep 3
+            adb shell input tap 340 230
+            sleep 3
             adb exec-out screencap -p > /tmp/2_table.png
             adb shell input tap 675 2080
             sleep 4
             adb exec-out screencap -p > /tmp/3_plot.png
             adb shell input tap 945 2080
-            sleep 4
+            sleep 3
             adb exec-out screencap -p > /tmp/4_settings.png
             adb logcat -d > /tmp/logcat.txt || true
 
