@@ -123,6 +123,10 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
     }
     val values = remember(parameter.symbol, span) { samples.map { parameter.extract(it) } }
     val textMeasurer = rememberTextMeasurer()
+    // Resolve label colors in the composable scope: drawing text without an
+    // explicit color uses black, which is invisible on the dark theme.
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val titleColor = MaterialTheme.colorScheme.onSurface
 
     Canvas(modifier = modifier.fillMaxSize()) {
         if (values.size < 2) return@Canvas
@@ -145,9 +149,9 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         fun py(y: Double): Float = (top + (y1 - y) / (y1 - y0) * plotHeight).toFloat()
 
         val axisColor = Color(0xFF8B919C)
-        val gridColor = Color(0xFF2A2E36)
-        val labelStyle = TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-        val titleStyle = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+        val gridColor = Color(0xFF4A515C)
+        val labelStyle = TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = labelColor)
+        val titleStyle = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = titleColor)
 
         // Ticks.
         val yTicks: List<Double> = if (parameter.logarithmic) {
