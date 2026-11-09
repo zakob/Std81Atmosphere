@@ -61,6 +61,61 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+  screenshots:
+    name: UI screenshots
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build debug APK
+        run: gradle assembleDebug
+
+      - name: Run emulator and capture screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n org.std81atmosphere/.MainActivity
+            sleep 5
+            adb exec-out screencap -p > /tmp/1_calc.png
+            # Table tab (2nd of 4), nav bar center row near the bottom
+            adb shell input tap 405 2190
+            sleep 3
+            adb exec-out screencap -p > /tmp/2_table.png
+            # Plot tab (3rd of 4)
+            adb shell input tap 675 2190
+            sleep 3
+            adb exec-out screencap -p > /tmp/3_plot.png
+            # Settings tab (4th of 4)
+            adb shell input tap 945 2190
+            sleep 3
+            adb exec-out screencap -p > /tmp/4_settings.png
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: /tmp/*.png
+          if-no-files-found: error
+
   release-apk:
     name: Release APK
     if: startsWith(github.ref, 'refs/tags/v')
