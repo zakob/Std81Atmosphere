@@ -1,2 +1,32 @@
+# Gradle / Android Studio
+local.properties
+.gradle/
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Local secrets and build artifacts
+keystores/
+bin/
+*.jks
+*.keystore
+
+# Old Kivy/buildozer leftovers
+.buildozer/
+__pycache__/
+*.pyc
+
 # Local build toolchain (JDK, Gradle, Android SDK) - never commit
 .toolchain/
+
+# OS
+.DS_Store
+Thumbs.db

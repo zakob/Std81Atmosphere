@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "org.std81atmosphere"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "org.std81atmosphere"
