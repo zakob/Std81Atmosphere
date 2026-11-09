@@ -94,18 +94,16 @@ jobs:
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -W -n org.std81atmosphere/.MainActivity
-            sleep 5
+            sleep 6
             adb exec-out screencap -p > /tmp/1_calc.png
-            # Table tab (2nd of 4), nav bar center row near the bottom
-            adb shell input tap 405 2190
+            # Navigation bar items (1080x2340): centers x=135/405/675/945, y@2080
+            adb shell input tap 405 2080
             sleep 3
             adb exec-out screencap -p > /tmp/2_table.png
-            # Plot tab (3rd of 4)
-            adb shell input tap 675 2190
+            adb shell input tap 675 2080
             sleep 3
             adb exec-out screencap -p > /tmp/3_plot.png
-            # Settings tab (4th of 4)
-            adb shell input tap 945 2190
+            adb shell input tap 945 2080
             sleep 3
             adb exec-out screencap -p > /tmp/4_settings.png
 
