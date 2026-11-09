@@ -21,7 +21,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withSave
 import androidx.compose.ui.graphics.rotate
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -150,14 +150,14 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         val titleStyle = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace)
 
         // Ticks.
-        val yTicks: List<Pair<Double, String>> = if (parameter.logarithmic) {
+        val yTicks: List<Double> = if (parameter.logarithmic) {
             val lo = 10.0.pow(y0)
             val hi = 10.0.pow(y1)
             buildList {
                 var e = floor(log10(lo)).toInt()
                 while (10.0.pow(e) <= hi * 1.001) {
                     val v = 10.0.pow(e)
-                    if (v >= lo * 0.999) add(v to formatLogTick(v))
+                    if (v >= lo * 0.999) add(v)
                     e++
                 }
             }
@@ -167,13 +167,13 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         val xTicks = niceTicks(0.0, span)
 
         // Grid + axes + tick marks.
-        for ((value, _) in yTicks) {
-            val y = py(value)
+        for (tickValue in yTicks) {
+            val y = py(tickValue)
             drawLine(gridColor, Offset(left, y), Offset(left + plotWidth, y), 1f)
             drawLine(axisColor, Offset(left - 4.dp.toPx(), y), Offset(left, y), 1.5f)
         }
-        for (value in xTicks) {
-            val x = px(value)
+        for (tickValue in xTicks) {
+            val x = px(tickValue)
             drawLine(gridColor, Offset(x, top), Offset(x, top + plotHeight), 1f)
             drawLine(axisColor, Offset(x, top + plotHeight), Offset(x, top + plotHeight + 4.dp.toPx()), 1.5f)
         }
@@ -190,17 +190,22 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         drawPath(path, Color(0xFFF2B33D), style = Stroke(width = 3.dp.toPx()))
 
         // Y tick labels.
-        for ((value, label) in yTicks) {
+        for (tickValue in yTicks) {
+            val label = if (parameter.logarithmic) {
+                "10^" + log10(tickValue).roundToInt()
+            } else {
+                formatTick(tickValue)
+            }
             val layout = textMeasurer.measure(AnnotatedString(label), style = labelStyle)
-            val y = py(value)
+            val y = py(tickValue)
             drawText(layout, topLeft = Offset(left - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2))
         }
 
         // X tick labels (km).
-        for (value in xTicks) {
-            val km = (value / 1000.0).roundToInt()
+        for (tickValue in xTicks) {
+            val km = (tickValue / 1000.0).roundToInt()
             val layout = textMeasurer.measure(AnnotatedString(km.toString()), style = labelStyle)
-            val x = px(value)
+            val x = px(tickValue)
             drawText(layout, topLeft = Offset(x - layout.size.width / 2, top + plotHeight + 6.dp.toPx()))
         }
 
@@ -219,24 +224,19 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         )
         val yTitleX = 18.dp.toPx()
         val yTitleY = top + plotHeight / 2
-        withSave {
-            drawContext.canvas.rotate(-90f, yTitleX, yTitleY)
-            drawText(
-                yTitleLayout,
-                topLeft = Offset(yTitleX - yTitleLayout.size.width / 2, yTitleY - yTitleLayout.size.height / 2),
-            )
-        }
+        drawContext.canvas.save()
+        drawContext.canvas.rotate(-90f, yTitleX, yTitleY)
+        drawText(
+            yTitleLayout,
+            topLeft = Offset(yTitleX - yTitleLayout.size.width / 2, yTitleY - yTitleLayout.size.height / 2),
+        )
+        drawContext.canvas.restore()
     }
 }
 
-private fun formatLogTick(value: Double): String {
-    val exponent = log10(value).roundToInt()
-    return "10^$exponent"
-}
-
-/** Choose ~[target] "nice" tick values spanning [min, max]. */
-private fun niceTicks(min: Double, max: Double, target: Int = 5): List<Pair<Double, String>> {
-    if (max <= min) return listOf(min to formatTick(min), max to formatTick(max))
+/** Choose ~[target] "nice" tick values spanning [min, max] (monotonic). */
+private fun niceTicks(min: Double, max: Double, target: Int = 5): List<Double> {
+    if (max <= min || !max.isFinite() || !min.isFinite()) return listOf(min)
     val raw = (max - min) / target
     val magnitude = 10.0.pow(floor(log10(raw)))
     val normalized = raw / magnitude
@@ -246,10 +246,10 @@ private fun niceTicks(min: Double, max: Double, target: Int = 5): List<Pair<Doub
         else -> magnitude
     }
     val start = floor(min / step) * step
-    val result = mutableListOf<Pair<Double, String>>()
+    val result = mutableListOf<Double>()
     var value = start
     while (value <= max + step * 1e-6) {
-        if (value >= min - step * 1e-6) result.add(value to formatTick(value))
+        if (value >= min - step * 1e-6) result.add(value)
         value += step
     }
     return result
@@ -257,12 +257,11 @@ private fun niceTicks(min: Double, max: Double, target: Int = 5): List<Pair<Doub
 
 private fun formatTick(value: Double): String {
     val abs = kotlin.math.abs(value)
-    val label = if (abs >= 100_000 || (abs < 0.001 && abs > 0)) {
+    return if (abs >= 100_000 || (abs < 0.001 && abs > 0)) {
         String.format(java.util.Locale.ROOT, "%.1e", value)
     } else if (abs >= 100) {
         String.format(java.util.Locale.ROOT, "%.0f", value)
     } else {
         String.format(java.util.Locale.ROOT, "%.2g", value)
     }
-    return label
 }

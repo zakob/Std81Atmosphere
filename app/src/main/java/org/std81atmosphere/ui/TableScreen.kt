@@ -113,9 +113,9 @@ private fun ResultTable(rows: List<AtmosphereState>) {
     // stay aligned under their column titles no matter the content.
     val columns = listOf(
         ColumnSpec(76.dp, Alignment.CenterHorizontally, I18n.tr("table_h")),
-        ColumnSpec(128.dp, Alignment.End, I18n.tr("table_p")),
-        ColumnSpec(76.dp, Alignment.End, I18n.tr("table_t")),
-        ColumnSpec(104.dp, Alignment.End, I18n.tr("table_rho")),
+        ColumnSpec(128.dp, Alignment.CenterEnd, I18n.tr("table_p")),
+        ColumnSpec(76.dp, Alignment.CenterEnd, I18n.tr("table_t")),
+        ColumnSpec(104.dp, Alignment.CenterEnd, I18n.tr("table_rho")),
     )
     val cellStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
     val grid = MaterialTheme.colorScheme.outlineVariant
@@ -155,7 +155,7 @@ private fun ResultTable(rows: List<AtmosphereState>) {
     }
 }
 
-private data class ColumnSpec(val width: Dp, val align: Alignment.Horizontal, val title: String)
+private data class ColumnSpec(val width: Dp, val align: Alignment, val title: String)
 
 @Composable
 private fun cell(column: ColumnSpec, value: String, style: TextStyle, grid: Color) {
