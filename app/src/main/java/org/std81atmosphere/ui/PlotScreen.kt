@@ -127,7 +127,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
     // explicit color uses black, which is invisible on the dark theme.
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val titleColor = MaterialTheme.colorScheme.onSurface
-    val curveColor = MaterialTheme.colorScheme.primary
+    val curveColor = MaterialTheme.colorScheme.onSurface
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     Canvas(modifier = modifier) {
@@ -198,6 +198,13 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
             val y1 = py(yValues[index])
             drawLine(curveColor, Offset(x0, y0), Offset(x1, y1), strokeWidth)
         }
+        // Debug: report the canvas size and a reference diagonal.
+        val debugLayout = textMeasurer.measure(
+            AnnotatedString("canvas ${size.width.toInt()}x${size.height.toInt()}"),
+            style = TextStyle(fontSize = 10.sp, color = Color.Red, fontFamily = FontFamily.Monospace),
+        )
+        drawText(debugLayout, topLeft = Offset(8.dp.toPx(), 8.dp.toPx()))
+        drawLine(Color.Red, Offset(left, top), Offset(left + plotWidth, top + plotHeight), 2.dp.toPx())
 
         // Y tick labels.
         for (tickValue in yTicks) {

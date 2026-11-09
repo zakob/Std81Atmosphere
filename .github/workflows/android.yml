@@ -104,12 +104,17 @@ jobs:
             sleep 3
             adb shell input tap 340 230
             sleep 3
+            adb shell dumpsys window | grep -i mCurrentFocus
             adb exec-out screencap -p > /tmp/2_table.png
             adb shell input tap 675 2080
             sleep 4
+            adb shell dumpsys window | grep -i mCurrentFocus
             adb exec-out screencap -p > /tmp/3_plot.png
             adb shell input tap 945 2080
             sleep 3
+            adb shell input tap 945 2080
+            sleep 3
+            adb shell dumpsys window | grep -i mCurrentFocus
             adb exec-out screencap -p > /tmp/4_settings.png
             adb logcat -d > /tmp/logcat.txt || true
 
