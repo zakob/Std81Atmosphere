@@ -2,12 +2,16 @@ package org.std81atmosphere.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -16,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -34,10 +39,11 @@ import kotlin.math.roundToInt
 import org.std81atmosphere.model.Atmosphere
 import org.std81atmosphere.model.I18n
 
+/** A plottable quantity: symbol, value extractor, its preferred y scale. */
 private data class PlotParameter(
     val symbol: String,
     val extract: (Double) -> Double,
-    val logarithmic: Boolean,
+    val defaultLog: Boolean,
     val axisLabelKey: String,
 )
 
@@ -48,14 +54,20 @@ private val PARAMETERS = listOf(
     PlotParameter("a", { h -> Atmosphere.soundSpeed(h) }, false, "plot_axis_a"),
 )
 
-private val SPANS_KM = listOf(20, 50, 100, 1200)
+private val SPANS_KM = listOf(20, 50, 100, 300, 1200)
 private const val SAMPLES = 240
 
-/** Plot screen: one parameter over a height range, drawn with Canvas. */
+/** Plot screen: one parameter over a height range with a y-scale toggle. */
 @Composable
 fun PlotScreen(modifier: Modifier = Modifier) {
     var parameterIndex by remember { mutableStateOf(0) }
     var spanKm by remember { mutableStateOf(100) }
+    // Reset to the parameter's preferred scale when the parameter changes;
+    // the user can still toggle it.
+    var logScale by remember(PARAMETERS[parameterIndex].symbol) {
+        mutableStateOf(PARAMETERS[parameterIndex].defaultLog)
+    }
+    var rangeMenuOpen by remember { mutableStateOf(false) }
 
     val parameter = PARAMETERS[parameterIndex]
     val span = spanKm * 1000.0
@@ -66,12 +78,13 @@ fun PlotScreen(modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Parameter picker.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             for ((index, item) in PARAMETERS.withIndex()) {
-                ParameterButton(
+                ChipButton(
                     label = item.symbol,
                     selected = index == parameterIndex,
                     onClick = { parameterIndex = index },
@@ -79,27 +92,51 @@ fun PlotScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
+
+        // Range dropdown + y-scale toggle.
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            for (km in SPANS_KM) {
-                ParameterButton(
-                    label = "$km",
-                    selected = km == spanKm,
-                    onClick = { spanKm = km },
-                    modifier = Modifier.weight(1f),
-                )
+            Box {
+                OutlinedButton(onClick = { rangeMenuOpen = true }) {
+                    Text(I18n.tr("plot_range") + ": $spanKm ${I18n.tr("unit_km")}")
+                }
+                DropdownMenu(expanded = rangeMenuOpen, onDismissRequest = { rangeMenuOpen = false }) {
+                    for (km in SPANS_KM) {
+                        DropdownMenuItem(
+                            text = { Text("$km ${I18n.tr("unit_km")}") },
+                            onClick = {
+                                spanKm = km
+                                rangeMenuOpen = false
+                            },
+                        )
+                    }
+                }
             }
+            ChipButton(
+                label = I18n.tr("plot_scale_linear"),
+                selected = !logScale,
+                onClick = { logScale = false },
+            )
+            ChipButton(
+                label = I18n.tr("plot_scale_log"),
+                selected = logScale,
+                onClick = { logScale = true },
+            )
         }
+
         Text(
             I18n.tr(parameter.axisLabelKey),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 4.dp),
         )
+
         AtmospherePlot(
             parameter = parameter,
             span = span,
+            logScale = logScale,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
@@ -107,17 +144,27 @@ fun PlotScreen(modifier: Modifier = Modifier) {
     }
 }
 
+/** Small selectable chip (also used by the table column picker). */
 @Composable
-private fun ParameterButton(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+internal fun ChipButton(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     if (selected) {
-        Button(onClick = onClick, modifier = modifier) { Text(label) }
+        Button(onClick = onClick, modifier = modifier.height(36.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
+        }
     } else {
-        OutlinedButton(onClick = onClick, modifier = modifier) { Text(label) }
+        OutlinedButton(onClick = onClick, modifier = modifier.height(36.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
+        }
     }
 }
 
 @Composable
-private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Modifier) {
+private fun AtmospherePlot(
+    parameter: PlotParameter,
+    span: Double,
+    logScale: Boolean,
+    modifier: Modifier,
+) {
     val samples = remember(parameter.symbol, span) {
         List(SAMPLES) { index -> span * index / (SAMPLES - 1) }
     }
@@ -127,7 +174,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
     // explicit color uses black, which is invisible on the dark theme.
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val titleColor = MaterialTheme.colorScheme.onSurface
-    val curveColor = MaterialTheme.colorScheme.onSurface
+    val curveColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     Canvas(modifier = modifier) {
@@ -135,7 +182,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
 
         drawRect(surfaceColor, Offset.Zero, size)
 
-        val left = 78.dp.toPx()
+        val left = 82.dp.toPx()
         val right = 14.dp.toPx()
         val top = 18.dp.toPx()
         val bottom = 40.dp.toPx()
@@ -143,13 +190,13 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         val plotHeight = size.height - top - bottom
         if (plotWidth <= 0 || plotHeight <= 0) return@Canvas
 
-        val yValues = values.map { if (parameter.logarithmic) log10(it) else it }
+        val yValues = values.map { if (logScale) log10(it) else it }
         val yMin = yValues.minOrNull()!!
         val yMax = yValues.maxOrNull()!!
         val y0 = if (yMin == yMax) yMin - 1.0 else yMin
         val y1 = if (yMin == yMax) yMax + 1.0 else yMax
 
-        fun px(x: Double): Float = (left + (x - 0.0) / span * plotWidth).toFloat()
+        fun px(x: Double): Float = (left + x / span * plotWidth).toFloat()
         fun py(y: Double): Float = (top + (y1 - y) / (y1 - y0) * plotHeight).toFloat()
 
         val axisColor = Color(0xFF8B919C)
@@ -157,8 +204,8 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         val labelStyle = TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = labelColor)
         val titleStyle = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = titleColor)
 
-        // Ticks.
-        val yTicks: List<Double> = if (parameter.logarithmic) {
+        // Tick values on the y axis (decimal decades for a log scale).
+        val yTicks: List<Double> = if (logScale) {
             val lo = 10.0.pow(y0)
             val hi = 10.0.pow(y1)
             buildList {
@@ -174,7 +221,7 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         }
         val xTicks = niceTicks(0.0, span)
 
-        // Grid + axes + tick marks.
+        // Grid and axes.
         for (tickValue in yTicks) {
             val y = py(tickValue)
             drawLine(gridColor, Offset(left, y), Offset(left + plotWidth, y), 1f)
@@ -188,27 +235,20 @@ private fun AtmospherePlot(parameter: PlotParameter, span: Double, modifier: Mod
         drawLine(axisColor, Offset(left, top + plotHeight), Offset(left + plotWidth, top + plotHeight), 1.5f)
         drawLine(axisColor, Offset(left, top + plotHeight), Offset(left, top), 1.5f)
 
-        // Curve: draw short segments explicitly (more robust than a single
-        // stroked path on some renderers).
+        // Curve as short segments (robust across renderers).
         val strokeWidth = 4.dp.toPx()
         for (index in 1 until values.size) {
-            val x0 = px(samples[index - 1])
-            val y0 = py(yValues[index - 1])
-            val x1 = px(samples[index])
-            val y1 = py(yValues[index])
-            drawLine(curveColor, Offset(x0, y0), Offset(x1, y1), strokeWidth)
+            drawLine(
+                curveColor,
+                Offset(px(samples[index - 1]), py(yValues[index - 1])),
+                Offset(px(samples[index]), py(yValues[index])),
+                strokeWidth,
+            )
         }
-        // Debug: report the canvas size and a reference diagonal.
-        val debugLayout = textMeasurer.measure(
-            AnnotatedString("canvas ${size.width.toInt()}x${size.height.toInt()}"),
-            style = TextStyle(fontSize = 10.sp, color = Color.Red, fontFamily = FontFamily.Monospace),
-        )
-        drawText(debugLayout, topLeft = Offset(8.dp.toPx(), 8.dp.toPx()))
-        drawLine(Color.Red, Offset(left, top), Offset(left + plotWidth, top + plotHeight), 2.dp.toPx())
 
         // Y tick labels.
         for (tickValue in yTicks) {
-            val label = if (parameter.logarithmic) {
+            val label = if (logScale) {
                 "10^" + log10(tickValue).roundToInt()
             } else {
                 formatTick(tickValue)
