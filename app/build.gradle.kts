@@ -13,8 +13,8 @@ android {
         applicationId = "org.std81atmosphere"
         minSdk = 28
         targetSdk = 35
-        versionCode = 100
-        versionName = "1.0.0"
+        versionCode = 101
+        versionName = "1.0.1"
     }
 
     signingConfigs {
@@ -53,6 +53,17 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+
+    // Name the outputs like the classic per-ABI builds, e.g.
+    // Std81Atmosphere-1.0.1-arm64-v8a-release.apk.
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName =
+                "Std81Atmosphere-${variant.versionName}-arm64-v8a-${variant.buildType.name}.apk"
+        }
     }
 }
 
