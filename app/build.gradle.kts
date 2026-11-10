@@ -19,9 +19,11 @@ android {
 
     signingConfigs {
         create("release") {
-            // Values are provided by the CI workflow environment; without them a
-            // local `assembleRelease` just uses an empty (unsigned) config.
-            storeFile = file(System.getenv("RELEASE_KEYSTORE_FILE") ?: "release.keystore")
+            // Values are provided by the CI workflow environment; paths are
+            // resolved from the repository root. Without them a local
+            // `assembleRelease` just uses an empty (unsigned) config.
+            storeFile = System.getenv("RELEASE_KEYSTORE_FILE")?.let { rootProject.file(it) }
+                ?: rootProject.file("release.keystore")
             storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
             keyPassword = System.getenv("RELEASE_KEY_ALIAS_PASSWORD") ?: ""
