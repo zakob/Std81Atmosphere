@@ -144,7 +144,7 @@ fun TableScreen(modifier: Modifier = Modifier, onMessage: (String) -> Unit = {})
             }
         }
 
-        ResultTable(rows, ALL_COLUMNS.filter { it.key in selectedKeys })
+        ResultTable(rows, ALL_COLUMNS.filter { it.key in selectedKeys }, Modifier.weight(1f))
     }
 }
 
@@ -167,7 +167,7 @@ private fun NumberField(label: String, value: String, onChange: (String) -> Unit
  * vertically scrolling body, so many (or wide) columns never overflow.
  */
 @Composable
-private fun ResultTable(rows: List<AtmosphereState>, columns: List<ColumnSpec>) {
+private fun ResultTable(rows: List<AtmosphereState>, columns: List<ColumnSpec>, modifier: Modifier) {
     if (rows.isEmpty()) {
         Text(I18n.tr("table_empty"), style = MaterialTheme.typography.bodyMedium)
         return
@@ -182,7 +182,7 @@ private fun ResultTable(rows: List<AtmosphereState>, columns: List<ColumnSpec>) 
     val grid = MaterialTheme.colorScheme.outlineVariant
     val hScroll = rememberScrollState()
 
-    Column(modifier = Modifier.weight(1f)) {
+    Column(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
